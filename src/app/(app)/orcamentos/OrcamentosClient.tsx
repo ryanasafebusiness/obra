@@ -271,7 +271,23 @@ export default function OrcamentosClient({
     doc.setTextColor(249, 115, 22)
     doc.text(`TOTAL: ${formatCurrency(orc.total)}`, 20, y)
 
-    doc.save(`orcamento-${orc.numero}.pdf`)
+    const pdfBlob = doc.output('blob')
+    const fileName = `orcamento-${orc.numero}.pdf`
+
+    if (navigator.canShare && navigator.canShare({ files: [new File([pdfBlob], fileName, { type: 'application/pdf' })] })) {
+      try {
+        await navigator.share({
+          files: [new File([pdfBlob], fileName, { type: 'application/pdf' })],
+          title: `Orçamento ${orc.numero}`,
+        })
+      } catch (err) {
+        // Fallback case the user cancels or it fails
+        doc.save(fileName)
+      }
+    } else {
+      // Desktop or unsupported browsers
+      doc.save(fileName)
+    }
   }
 
   return (
