@@ -27,10 +27,6 @@ export default function OrcamentosPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchData()
-  }, [])
-
   const fetchData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
