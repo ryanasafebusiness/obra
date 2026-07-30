@@ -20,7 +20,7 @@ export async function saveCalculation(
     return { error: 'Sessão expirada. Inicie sessão novamente.' }
   }
 
-  const { error } = await supabase.from('calculations').insert({
+  const { error: calcError } = await supabase.from('calculations').insert({
     user_id: user.id,
     tipo: params.tipo,
     nome: params.nome,
@@ -28,8 +28,48 @@ export async function saveCalculation(
     resultado: params.resultado,
   })
 
-  if (error) {
-    return { error: error.message }
+  if (calcError) {
+    return { error: calcError.message }
+  }
+
+  // Also create a Draft Budget automatically
+  const res = params.resultado as any
+  if (res && Array.isArray(res.materiais)) {
+    const itens = res.materiais.map((m: any) => {
+      const precoUnitario = m.quantidade > 0 ? m.preco_estimado / m.quantidade : 0
+      return {
+        descricao: m.nome,
+        quantidade: m.quantidade,
+        unidade: m.unidade,
+        preco_unitario: Number(precoUnitario.toFixed(2)),
+        total: m.preco_estimado,
+      }
+    })
+
+    const materiais_total = res.custo_total_materiais || 0
+    const iva = materiais_total * 0.23
+    const total = materiais_total + iva
+
+    const date = new Date()
+    const numero = `ORC-${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`
+
+    const { error: budgetError } = await supabase.from('budgets').insert({
+      user_id: user.id,
+      numero: numero,
+      itens: itens,
+      mao_de_obra: 0,
+      materiais_total: materiais_total,
+      iva: 23,
+      total: total,
+      notas: `Gerado automaticamente a partir da calculadora de ${params.tipo}.`,
+      status: 'rascunho',
+    })
+
+    if (budgetError) {
+      console.error('Failed to create budget draft:', budgetError)
+      // We don't block the user, since the calculation was saved, but we could return the error.
+      // Let's silently fail or log it, so it doesn't break the UI.
+    }
   }
 
   return { error: null }

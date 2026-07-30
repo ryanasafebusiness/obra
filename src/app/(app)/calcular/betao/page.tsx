@@ -33,21 +33,21 @@ export default function BetaoPage() {
     setError(null)
   }
 
-  const handleSalvar = async () => {
-    if (!resultado) return
+  const handleSalvar = async (editedResult: any) => {
+    if (!editedResult) return
     setSaving(true)
     setError(null)
 
     const { error: saveError } = await saveCalculation(supabase, {
       tipo: 'betao',
-      nome: nome || 'Laje de Betão',
+      nome: nome || 'Betão',
       dados: {
         comprimento: parseFloat(comprimento),
         largura: parseFloat(largura),
-        altura: parseFloat(altura),
-        tipo_betao: tipoBetao,
+        espessura: parseFloat(altura),
+        proporcao: tipoBetao
       },
-      resultado,
+      resultado: editedResult,
     })
 
     setSaving(false)

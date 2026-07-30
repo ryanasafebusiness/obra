@@ -43,8 +43,8 @@ export default function PinturaPage() {
     setError(null)
   }
 
-  const handleSalvar = async () => {
-    if (!resultado) return
+  const handleSalvar = async (editedResult: any) => {
+    if (!editedResult) return
     setSaving(true)
     setError(null)
 
@@ -60,7 +60,7 @@ export default function PinturaPage() {
         demaos: parseInt(demaos),
         rendimento: RENDIMENTO_PADRAO,
       },
-      resultado,
+      resultado: editedResult,
     })
 
     setSaving(false)

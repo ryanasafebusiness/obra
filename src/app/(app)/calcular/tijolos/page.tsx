@@ -43,8 +43,8 @@ export default function TijolosPage() {
     setError(null)
   }
 
-  const handleSalvar = async () => {
-    if (!resultado) return
+  const handleSalvar = async (editedResult: any) => {
+    if (!editedResult) return
     setSaving(true)
     setError(null)
 
@@ -57,7 +57,7 @@ export default function TijolosPage() {
         tipo_bloco: tipoBloco,
         margem_desperdicio: parseFloat(margem)
       },
-      resultado,
+      resultado: editedResult,
     })
 
     setSaving(false)

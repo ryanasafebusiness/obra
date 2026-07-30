@@ -35,8 +35,8 @@ export default function PladurPage() {
     setError(null)
   }
 
-  const handleSalvar = async () => {
-    if (!resultado) return
+  const handleSalvar = async (editedResult: any) => {
+    if (!editedResult) return
     setSaving(true)
     setError(null)
 
@@ -49,7 +49,7 @@ export default function PladurPage() {
         tipo_placa: tipoPlaca,
         dupla_face: duplaFace
       },
-      resultado,
+      resultado: editedResult,
     })
 
     setSaving(false)

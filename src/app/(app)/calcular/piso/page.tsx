@@ -35,8 +35,8 @@ export default function PisoPage() {
     setError(null)
   }
 
-  const handleSalvar = async () => {
-    if (!resultado) return
+  const handleSalvar = async (editedResult: any) => {
+    if (!editedResult) return
     setSaving(true)
     setError(null)
 
@@ -50,7 +50,7 @@ export default function PisoPage() {
         m2_por_caixa: parseFloat(m2PorCaixa),
         margem_desperdicio: parseFloat(margem)
       },
-      resultado,
+      resultado: editedResult,
     })
 
     setSaving(false)

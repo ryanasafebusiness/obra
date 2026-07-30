@@ -39,8 +39,8 @@ export default function AzulejoPage() {
     setError(null)
   }
 
-  const handleSalvar = async () => {
-    if (!resultado) return
+  const handleSalvar = async (editedResult: any) => {
+    if (!editedResult) return
     setSaving(true)
     setError(null)
 
@@ -56,7 +56,7 @@ export default function AzulejoPage() {
         pecas_por_caixa: parseInt(pecasPorCaixa),
         margem_desperdicio: parseFloat(margem)
       },
-      resultado,
+      resultado: editedResult,
     })
 
     setSaving(false)
