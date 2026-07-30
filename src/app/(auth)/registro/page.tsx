@@ -7,7 +7,7 @@ import { ArrowLeft, ArrowRight, Check, MailCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { PROFISSOES } from '@/lib/constants'
 
-type Plano = 'gratuito' | 'pro' | 'empresa'
+type Plano = 'pro' | 'empresa'
 
 const PLANOS: {
   id: Plano
@@ -16,12 +16,6 @@ const PLANOS: {
   destaque?: boolean
   features: string[]
 }[] = [
-  {
-    id: 'gratuito',
-    nome: 'Gratuito',
-    preco: '0€',
-    features: ['10 cálculos/mês', '5 clientes', 'Calculadoras básicas'],
-  },
   {
     id: 'pro',
     nome: 'Pro',
@@ -40,7 +34,7 @@ const PLANOS: {
 const STEPS = [
   {
     title: 'Vamos começar 👷',
-    subtitle: 'Leva menos de 2 minutos — sem cartão para o plano grátis.',
+    subtitle: 'Leva menos de 2 minutos.',
   },
   {
     title: 'Cria a tua conta',
@@ -48,7 +42,7 @@ const STEPS = [
   },
   {
     title: 'Escolhe o teu plano',
-    subtitle: 'Começa grátis ou desbloqueia tudo já. Podes mudar quando quiseres.',
+    subtitle: '14 dias grátis em qualquer plano. Cancele quando quiser, sem custos.',
   },
 ] as const
 
@@ -88,7 +82,7 @@ export default function RegistroPage() {
       email,
       password,
       options: {
-        data: { nome, profissao },
+        data: { nome, profissao, plano_pretendido: plano },
       },
     })
 
@@ -106,16 +100,11 @@ export default function RegistroPage() {
 
     // Sem confirmação de email ainda não há sessão — o perfil (nome,
     // profissão) já ficou gravado pelo trigger handle_new_user() a partir
-    // dos metadados do signUp, e não há como chamar o checkout sem sessão.
+    // dos metadados do signUp. O checkout do trial arranca automaticamente
+    // em /auth/callback assim que o email for confirmado.
     if (!data.session) {
       setAwaitingConfirmation(true)
       setLoading(false)
-      return
-    }
-
-    if (plano === 'gratuito') {
-      router.push('/dashboard')
-      router.refresh()
       return
     }
 
@@ -133,13 +122,14 @@ export default function RegistroPage() {
 
       window.location.href = checkoutData.url
     } catch {
-      // A conta já foi criada — segue para o dashboard, o upgrade pode ser feito lá.
+      // A conta já foi criada — o trial pode ser iniciado em Ajustes.
       router.push('/dashboard')
       router.refresh()
     }
   }
 
   const progressPct = ((step + 1) / STEPS.length) * 100
+  const planoSelecionado = PLANOS.find((p) => p.id === plano)!
 
   if (awaitingConfirmation) {
     return (
@@ -155,12 +145,10 @@ export default function RegistroPage() {
               Abra-o para ativar a sua conta.
             </p>
           </div>
-          {plano !== 'gratuito' && (
-            <p className="text-xs text-muted-foreground bg-surface-elevated rounded-xl p-3">
-              Escolheu o plano {plano === 'pro' ? 'Pro' : 'Empresa'} — depois de confirmar o email e iniciar sessão,
-              conclua o upgrade em <span className="font-medium text-foreground">Ajustes</span>.
-            </p>
-          )}
+          <p className="text-xs text-muted-foreground bg-surface-elevated rounded-xl p-3">
+            Assim que confirmar, o seu teste grátis de 14 dias no plano {planoSelecionado.nome} arranca
+            automaticamente — só falta indicar o cartão.
+          </p>
           <Link
             href="/login"
             className="block w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold text-base hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-transform"
@@ -289,6 +277,11 @@ export default function RegistroPage() {
 
           {step === 2 && (
             <div className="space-y-3">
+              <div className="rounded-xl bg-primary/5 border border-primary/20 px-4 py-3 text-center">
+                <p className="text-sm font-bold text-primary">🎉 14 dias grátis, em qualquer plano</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Pedimos o cartão só para ativar o trial — sem cobranças agora.</p>
+              </div>
+
               {PLANOS.map((p) => (
                 <button
                   key={p.id}
@@ -314,7 +307,10 @@ export default function RegistroPage() {
                         <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary text-white font-bold">MAIS POPULAR</span>
                       )}
                     </div>
-                    <p className="text-sm font-bold text-primary">{p.preco}</p>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-primary">14 dias grátis</p>
+                      <p className="text-[11px] text-muted-foreground">depois {p.preco}</p>
+                    </div>
                   </div>
                   <ul className="space-y-0.5 pl-6">
                     {p.features.map((f) => (
@@ -341,7 +337,7 @@ export default function RegistroPage() {
               </span>
             ) : isLastStep ? (
               <span className="flex items-center justify-center gap-2">
-                {plano === 'gratuito' ? 'Criar conta grátis' : 'Criar conta e continuar'}
+                Começar teste grátis de 14 dias
                 <ArrowRight className="w-4 h-4" />
               </span>
             ) : (

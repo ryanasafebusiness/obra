@@ -171,12 +171,6 @@ export default function AjustesPage() {
 
   const planos = [
     {
-      id: 'gratuito',
-      nome: 'Gratuito',
-      preco: '0€',
-      features: ['10 cálculos/mês', '5 clientes', 'Calculadoras básicas'],
-    },
-    {
       id: 'pro',
       nome: 'Pro',
       preco: '9,99€/mês',
@@ -190,6 +184,8 @@ export default function AjustesPage() {
       features: ['Tudo do Pro', 'Vários trabalhadores', 'Gestão de equipa', 'Obras ilimitadas'],
     },
   ]
+
+  const semPlanoAtivo = profile?.plano !== 'pro' && profile?.plano !== 'empresa'
 
   return (
     <div className="px-4 pt-6 pb-4 max-w-lg mx-auto w-full">
@@ -213,7 +209,7 @@ export default function AjustesPage() {
           <h1 className="text-xl font-bold text-foreground">{nome}</h1>
           <p className="text-sm text-muted-foreground">{profile?.email}</p>
           <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium uppercase">
-            {profile?.plano || 'gratuito'}
+            {profile?.plano === 'pro' || profile?.plano === 'empresa' ? profile.plano : 'sem plano'}
           </span>
         </div>
       </div>
@@ -290,6 +286,13 @@ export default function AjustesPage() {
       <div className="glass rounded-2xl p-4 mb-4 animate-slide-up" style={{ animationDelay: '0.15s' }}>
         <SectionHeader icon={Crown} title="Plano e faturação" />
 
+        {semPlanoAtivo && (
+          <div className="rounded-xl bg-primary/5 border border-primary/20 px-3 py-2.5 text-center mb-3">
+            <p className="text-xs font-semibold text-primary">Sem plano ativo</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Comece um teste grátis de 14 dias — só pedimos o cartão para ativar.</p>
+          </div>
+        )}
+
         <div className="space-y-3">
           {planos.map((plano) => (
             <div
@@ -309,7 +312,14 @@ export default function AjustesPage() {
                     <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary text-white font-bold">POPULAR</span>
                   )}
                 </div>
-                <p className="text-sm font-bold text-primary">{plano.preco}</p>
+                {profile?.plano === plano.id ? (
+                  <p className="text-sm font-bold text-primary">{plano.preco}</p>
+                ) : (
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-primary">14 dias grátis</p>
+                    <p className="text-[11px] text-muted-foreground">depois {plano.preco}</p>
+                  </div>
+                )}
               </div>
               <ul className="space-y-1">
                 {plano.features.map((f) => (
@@ -324,7 +334,11 @@ export default function AjustesPage() {
                   disabled={upgrading !== null}
                   className="w-full mt-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors disabled:opacity-50"
                 >
-                  {upgrading === plano.id ? 'A abrir pagamento...' : 'Fazer upgrade'}
+                  {upgrading === plano.id
+                    ? 'A abrir pagamento...'
+                    : semPlanoAtivo
+                      ? 'Iniciar teste grátis'
+                      : 'Fazer upgrade'}
                 </button>
               )}
               {profile?.plano === plano.id && (
