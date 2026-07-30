@@ -159,34 +159,9 @@ export default async function DashboardPage() {
               </Link>
             ))
           ) : (
-            <>
-              {/* Placeholder Mock Data as requested by user if no real data */}
-              <div className="floating-card p-4 flex items-center gap-4">
-                <div className="w-14 h-14 bg-orange-50 rounded-xl flex items-center justify-center flex-shrink-0 text-orange-500">
-                  <span className="text-2xl">🏢</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-slate-800 truncate">Apartamento Lisboa</h3>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <div className="w-2 h-2 rounded-full bg-orange-500" />
-                    <span className="text-xs font-medium text-slate-500">Orçamento</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="floating-card p-4 flex items-center gap-4">
-                <div className="w-14 h-14 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0 text-emerald-500">
-                  <span className="text-2xl">🏠</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-slate-800 truncate">Moradia Porto</h3>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span className="text-xs font-medium text-slate-500">Em andamento</span>
-                  </div>
-                </div>
-              </div>
-            </>
+            <div className="text-center p-6 bg-slate-50 border border-slate-100 rounded-2xl text-slate-500 text-sm">
+              Ainda não tem obras recentes.
+            </div>
           )}
         </div>
       </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Send, Download, Phone, ReceiptText } from 'lucide-react'
+import { Plus, Send, Download, Phone, ReceiptText, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { Budget, BudgetItem, Client } from '@/types/database'
@@ -139,6 +139,16 @@ export default function OrcamentosPage() {
     setNotas(orc.notas || '')
     setShowForm(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem a certeza que deseja apagar este orçamento?')) return
+    const { error } = await supabase.from('budgets').delete().eq('id', id)
+    if (error) {
+      alert('Erro ao apagar o orçamento: ' + error.message)
+    } else {
+      fetchData()
+    }
   }
 
   const enviarWhatsApp = (orc: Budget & { client?: Client }) => {
@@ -369,15 +379,18 @@ export default function OrcamentosPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="p-4 pt-0 grid grid-cols-2 gap-3">
-                  <button onClick={() => enviarWhatsApp(orc)} className="col-span-2 py-3.5 rounded-xl bg-[#25D366] text-white font-bold flex items-center justify-center gap-2 hover:bg-[#20bd5a] transition-colors shadow-lg shadow-[#25D366]/20">
+                <div className="p-4 pt-0 grid grid-cols-6 gap-3">
+                  <button onClick={() => enviarWhatsApp(orc)} className="col-span-6 py-3.5 rounded-xl bg-[#25D366] text-white font-bold flex items-center justify-center gap-2 hover:bg-[#20bd5a] transition-colors shadow-lg shadow-[#25D366]/20">
                     <Send className="w-4 h-4" /> Enviar WhatsApp
                   </button>
-                  <button onClick={() => handleEdit(orc)} className="py-3.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold flex items-center justify-center hover:bg-slate-50 transition-colors">
+                  <button onClick={() => handleEdit(orc)} className="col-span-2 py-3.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold flex items-center justify-center hover:bg-slate-50 transition-colors">
                     Editar
                   </button>
-                  <button onClick={() => gerarPDF(orc)} className="py-3.5 rounded-xl bg-slate-100 text-slate-700 font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-colors">
+                  <button onClick={() => gerarPDF(orc)} className="col-span-3 py-3.5 rounded-xl bg-slate-100 text-slate-700 font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-colors">
                     <Download className="w-4 h-4" /> PDF
+                  </button>
+                  <button onClick={() => handleDelete(orc.id)} className="col-span-1 py-3.5 rounded-xl bg-red-50 text-red-600 font-bold flex items-center justify-center hover:bg-red-100 transition-colors">
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
