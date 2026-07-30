@@ -2,9 +2,9 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'ObraCalc PT - Cálculos de Obra',
-    short_name: 'ObraCalc',
-    description: 'Calculadora profissional para construção civil em Portugal. Calcule materiais, custos e gere orçamentos.',
+    name: 'Mezzo - Cálculos de Obra',
+    short_name: 'Mezzo',
+    description: 'Calculadora e gestor de obras e orçamentos para a construção civil em Portugal.',
     start_url: '/dashboard',
     display: 'standalone',
     background_color: '#0C0A09',

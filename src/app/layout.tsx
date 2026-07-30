@@ -13,14 +13,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ObraCalc PT - Cálculos de Obra",
-  description: "Calculadora profissional para construção civil em Portugal. Calcule materiais, custos e gere orçamentos pelo telemóvel.",
+  title: "Mezzo - Cálculos de Obra",
+  description: "Calculadora de materiais e gestor de obras para construção civil em Portugal. Calcule materiais, custos e gere orçamentos pelo telemóvel.",
   keywords: ["construção civil", "orçamento", "calculadora", "obra", "Portugal", "pintura", "piso", "betão"],
-  authors: [{ name: "ObraCalc PT" }],
+  authors: [{ name: "Mezzo" }],
+  creator: "Mezzo",
+  publisher: "Mezzo",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
-    title: "ObraCalc PT",
+    statusBarStyle: "default",
+    title: "Mezzo",
   },
   formatDetection: {
     telephone: false,

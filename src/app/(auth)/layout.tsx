@@ -1,3 +1,5 @@
+import { HardHat } from 'lucide-react'
+
 export default function AuthLayout({
   children,
 }: {
@@ -7,14 +9,12 @@ export default function AuthLayout({
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-8 animate-slide-up">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 mb-4 shadow-lg shadow-orange-500/20">
-            <span className="text-4xl">🏗️</span>
+        <div className="text-center space-y-2 mb-8">
+          <div className="w-16 h-16 bg-white rounded-2xl shadow-lg flex items-center justify-center mx-auto mb-6 transform -rotate-6">
+            <HardHat className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold gradient-text">ObraCalc PT</h1>
-          <p className="text-muted-foreground mt-2 text-sm">
-            Cálculos e orçamentos para construção civil
-          </p>
+          <h1 className="text-3xl font-bold gradient-text">Mezzo</h1>
+          <p className="text-slate-500 font-medium">O seu gestor de obras de bolso</p>
         </div>
         {children}
       </div>
