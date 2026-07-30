@@ -20,7 +20,7 @@ export async function GET(request: Request) {
           .from('profiles')
           .select('id, plano')
           .eq('id', user.id)
-          .single()
+          .maybeSingle()
 
         if (!profile) {
           await supabase.from('profiles').insert({

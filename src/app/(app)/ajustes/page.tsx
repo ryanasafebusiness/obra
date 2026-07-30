@@ -32,7 +32,7 @@ export default function AjustesMenuPage() {
         .from('profiles')
         .select('nome, plano')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
       if (data) {
         setNome(data.nome || '')

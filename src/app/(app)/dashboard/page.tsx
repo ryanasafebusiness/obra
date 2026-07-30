@@ -5,16 +5,22 @@ import { formatCurrency } from '@/lib/utils'
 import { ChevronRight, TrendingUp } from 'lucide-react'
 import type { Project } from '@/types/database'
 
+import { redirect } from 'next/navigation'
+
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login')
+  }
 
   // Fetch profile
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user?.id)
-    .single()
+    .maybeSingle()
 
   // Fetch projects in progress
   const { count: activeProjectsCount } = await supabase
