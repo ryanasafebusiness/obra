@@ -15,21 +15,25 @@ function gerarNumeroOrcamento() {
 export default function OrcamentosClient({ 
   initialBudgets, 
   initialClients,
+  initialProjects,
   userPlan
 }: { 
-  initialBudgets: (Budget & { client?: Client })[], 
+  initialBudgets: (Budget & { client?: Client, project?: { id: string; nome: string } })[], 
   initialClients: Client[],
+  initialProjects: { id: string; nome: string }[],
   userPlan: string
 }) {
   const isFreePlan = userPlan === 'gratuito'
   const supabase = createClient()
-  const [orcamentos, setOrcamentos] = useState<(Budget & { client?: Client })[]>(initialBudgets)
+  const [orcamentos, setOrcamentos] = useState<(Budget & { client?: Client, project?: { id: string; nome: string } })[]>(initialBudgets)
   const [clientes, setClientes] = useState<Client[]>(initialClients)
+  const [projetos, setProjetos] = useState<{ id: string; nome: string }[]>(initialProjects)
   const [showForm, setShowForm] = useState(false)
   const [editingBudgetId, setEditingBudgetId] = useState<string | null>(null)
 
   // Form fields
   const [clienteSearch, setClienteSearch] = useState('')
+  const [projetoId, setProjetoId] = useState('')
   const [itens, setItens] = useState([{ descricao: '', quantidade: 1, unidade: 'un', preco_unitario: 0 }])
   const [maoDeObra, setMaoDeObra] = useState('')
   const [notas, setNotas] = useState('')
@@ -41,13 +45,15 @@ export default function OrcamentosClient({
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const [{ data: budgets }, { data: clients }] = await Promise.all([
-        supabase.from('budgets').select('*, client:clients(*)').eq('user_id', user.id).order('created_at', { ascending: false }),
+      const [{ data: budgets }, { data: clients }, { data: projects }] = await Promise.all([
+        supabase.from('budgets').select('*, client:clients(*), project:projects(*)').eq('user_id', user.id).order('created_at', { ascending: false }),
         supabase.from('clients').select('*').eq('user_id', user.id),
+        supabase.from('projects').select('id, nome').eq('user_id', user.id).order('created_at', { ascending: false })
       ])
 
       setOrcamentos(budgets || [])
       setClientes(clients || [])
+      setProjetos(projects || [])
     } catch (err) {
       console.error(err)
     }
@@ -108,6 +114,7 @@ export default function OrcamentosClient({
     if (editingBudgetId) {
       const { error: updateError } = await supabase.from('budgets').update({
         client_id: finalClienteId,
+        project_id: projetoId || null,
         itens: itens.map(item => ({ ...item, total: item.quantidade * item.preco_unitario })),
         mao_de_obra: maoDeObraVal,
         materiais_total: subtotalMateriais,
@@ -125,6 +132,7 @@ export default function OrcamentosClient({
       const { error: insertError } = await supabase.from('budgets').insert({
         user_id: user.id,
         client_id: finalClienteId,
+        project_id: projetoId || null,
         numero: gerarNumeroOrcamento(),
         itens: itens.map(item => ({ ...item, total: item.quantidade * item.preco_unitario })),
         mao_de_obra: maoDeObraVal,
@@ -149,16 +157,18 @@ export default function OrcamentosClient({
     setMaoDeObra('')
     setNotas('')
     setClienteSearch('')
+    setProjetoId('')
     fetchData()
   }
 
-  const handleEdit = (orc: Budget & { client?: Client }) => {
+  const handleEdit = (orc: Budget & { client?: Client, project?: { id: string; nome: string } }) => {
     if (isFreePlan) {
       alert('A edição de orçamentos é uma funcionalidade premium.')
       return
     }
     setEditingBudgetId(orc.id)
     setClienteSearch(orc.client?.nome || '')
+    setProjetoId(orc.project_id || '')
     setItens(orc.itens as any || [])
     setMaoDeObra(orc.mao_de_obra.toString())
     setNotas(orc.notas || '')
@@ -292,6 +302,11 @@ export default function OrcamentosClient({
             </datalist>
           </div>
 
+          <select value={projetoId} onChange={(e) => setProjetoId(e.target.value)} className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none font-medium">
+            <option value="">Atribuir à Obra (opcional)</option>
+            {projetos.map((p) => (<option key={p.id} value={p.id}>{p.nome}</option>))}
+          </select>
+
           {/* Items */}
           <div className="space-y-3 pt-2">
             <p className="text-sm font-bold text-slate-700 uppercase tracking-wider">Itens do orçamento</p>
@@ -396,6 +411,9 @@ export default function OrcamentosClient({
                     <div>
                       <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">Cliente</p>
                       <p className="font-bold text-slate-800">{orc.client?.nome || 'Cliente não associado'}</p>
+                      {orc.project && (
+                        <p className="text-xs text-primary font-medium mt-0.5">Obra: {orc.project.nome}</p>
+                      )}
                     </div>
                   </div>
 

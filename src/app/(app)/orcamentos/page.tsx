@@ -10,10 +10,10 @@ export default async function OrcamentosPage() {
     redirect('/login')
   }
 
-  const [{ data: budgets }, { data: clients }, { data: profile }] = await Promise.all([
+  const [{ data: budgets }, { data: clients }, { data: profile }, { data: projects }] = await Promise.all([
     supabase
       .from('budgets')
-      .select('*, client:clients(*)')
+      .select('*, client:clients(*), project:projects(*)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false }),
     supabase
@@ -24,13 +24,19 @@ export default async function OrcamentosPage() {
       .from('profiles')
       .select('plano')
       .eq('id', user.id)
-      .single()
+      .single(),
+    supabase
+      .from('projects')
+      .select('id, nome')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
   ])
 
   return (
     <OrcamentosClient 
       initialBudgets={budgets as any || []} 
       initialClients={clients as any || []} 
+      initialProjects={projects as any || []}
       userPlan={profile?.plano || 'gratuito'}
     />
   )
