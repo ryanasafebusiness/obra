@@ -45,7 +45,7 @@ export default function PinturaPage() {
     setError(null)
   }
 
-  const handleSalvar = async (editedResult: any) => {
+  const handleSalvar = async (editedResult: any, projeto: { projetoId: string; novaObraNome: string }) => {
     if (!editedResult) return
     setSaving(true)
     setError(null)
@@ -63,6 +63,8 @@ export default function PinturaPage() {
         rendimento: RENDIMENTO_PADRAO,
       },
       resultado: editedResult,
+      projetoId: projeto.projetoId,
+      novaObraNome: projeto.novaObraNome,
     })
 
     setSaving(false)

@@ -2,14 +2,15 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { BUDGET_STATUS } from '@/lib/constants'
-import { ArrowLeft, MapPin, Phone, Wrench, Calendar, ReceiptText } from 'lucide-react'
+import { BUDGET_STATUS, CALCULATOR_MODULES } from '@/lib/constants'
+import { ArrowLeft, MapPin, Phone, Wrench, Calendar, ReceiptText, Calculator } from 'lucide-react'
 import { ObraStatusSelect } from '@/components/ObraStatusSelect'
-import type { Budget, Client, Project } from '@/types/database'
+import type { Budget, Calculation, Client, Project } from '@/types/database'
 
 type ProjectDetail = Project & {
   clients: Client | null
   budgets: Budget[]
+  calculations: Calculation[]
 }
 
 export default async function ObraDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -19,7 +20,7 @@ export default async function ObraDetailPage({ params }: { params: Promise<{ id:
 
   const { data: project } = await supabase
     .from('projects')
-    .select('*, clients(*), budgets(*)')
+    .select('*, clients(*), budgets(*), calculations(*)')
     .eq('id', id)
     .eq('user_id', user?.id)
     .single()
@@ -125,6 +126,41 @@ export default async function ObraDetailPage({ params }: { params: Promise<{ id:
           <p className="text-sm text-slate-500 mb-3">Ainda não há orçamentos associados a esta obra.</p>
           <Link href="/orcamentos" className="text-sm text-primary font-medium hover:underline">
             Criar orçamento →
+          </Link>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between mb-4 mt-8">
+        <h2 className="text-lg font-bold text-slate-800">Cálculos da obra</h2>
+      </div>
+
+      {obra.calculations && obra.calculations.length > 0 ? (
+        <div className="space-y-3">
+          {obra.calculations.map((calc) => {
+            const modulo = CALCULATOR_MODULES.find((m) => m.id === calc.tipo)
+            const custo = (calc.resultado as { custo_total_materiais?: number })?.custo_total_materiais
+            return (
+              <div key={calc.id} className="floating-card p-4 flex items-center gap-4">
+                <div className="w-11 h-11 rounded-xl bg-slate-50 flex items-center justify-center text-xl flex-shrink-0">
+                  {modulo?.emoji || '📐'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-slate-800 truncate">{calc.nome}</p>
+                  <p className="text-xs text-slate-400">{modulo?.nome || calc.tipo} · {formatDate(calc.created_at)}</p>
+                </div>
+                {typeof custo === 'number' && (
+                  <p className="font-bold text-slate-800 flex-shrink-0">{formatCurrency(custo)}</p>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="floating-card p-8 text-center">
+          <Calculator className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+          <p className="text-sm text-slate-500 mb-3">Ainda não há cálculos associados a esta obra.</p>
+          <Link href="/calcular" className="text-sm text-primary font-medium hover:underline">
+            Fazer um cálculo →
           </Link>
         </div>
       )}

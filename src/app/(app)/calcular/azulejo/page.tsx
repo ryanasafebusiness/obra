@@ -39,7 +39,7 @@ export default function AzulejoPage() {
     setError(null)
   }
 
-  const handleSalvar = async (editedResult: any) => {
+  const handleSalvar = async (editedResult: any, projeto: { projetoId: string; novaObraNome: string }) => {
     if (!editedResult) return
     setSaving(true)
     setError(null)
@@ -57,6 +57,8 @@ export default function AzulejoPage() {
         margem_desperdicio: parseFloat(margem)
       },
       resultado: editedResult,
+      projetoId: projeto.projetoId,
+      novaObraNome: projeto.novaObraNome,
     })
 
     setSaving(false)

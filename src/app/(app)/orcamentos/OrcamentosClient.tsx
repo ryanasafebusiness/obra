@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { Budget, BudgetItem, Client } from '@/types/database'
 import { BUDGET_STATUS } from '@/lib/constants'
+import { resolveProjectId, NOVA_OBRA_VALUE } from '@/lib/projects'
 
 // gerado fora do componente para não ser uma chamada "impura" durante o render
 function gerarNumeroOrcamento() {
@@ -34,6 +35,7 @@ export default function OrcamentosClient({
   // Form fields
   const [clienteSearch, setClienteSearch] = useState('')
   const [projetoId, setProjetoId] = useState('')
+  const [novaObraNome, setNovaObraNome] = useState('')
   const [itens, setItens] = useState([{ descricao: '', quantidade: 1, unidade: 'un', preco_unitario: 0 }])
   const [maoDeObra, setMaoDeObra] = useState('')
   const [notas, setNotas] = useState('')
@@ -111,10 +113,25 @@ export default function OrcamentosClient({
       }
     }
 
+    let finalProjetoId: string | null = null
+    if (projetoId) {
+      const resolved = await resolveProjectId(supabase, user.id, {
+        projetoId,
+        novaObraNome,
+        clienteId: finalClienteId,
+      })
+      if (resolved.error) {
+        setError(resolved.error)
+        setSaving(false)
+        return
+      }
+      finalProjetoId = resolved.projectId
+    }
+
     if (editingBudgetId) {
       const { error: updateError } = await supabase.from('budgets').update({
         client_id: finalClienteId,
-        project_id: projetoId || null,
+        project_id: finalProjetoId,
         itens: itens.map(item => ({ ...item, total: item.quantidade * item.preco_unitario })),
         mao_de_obra: maoDeObraVal,
         materiais_total: subtotalMateriais,
@@ -132,7 +149,7 @@ export default function OrcamentosClient({
       const { error: insertError } = await supabase.from('budgets').insert({
         user_id: user.id,
         client_id: finalClienteId,
-        project_id: projetoId || null,
+        project_id: finalProjetoId,
         numero: gerarNumeroOrcamento(),
         itens: itens.map(item => ({ ...item, total: item.quantidade * item.preco_unitario })),
         mao_de_obra: maoDeObraVal,
@@ -158,6 +175,7 @@ export default function OrcamentosClient({
     setNotas('')
     setClienteSearch('')
     setProjetoId('')
+    setNovaObraNome('')
     fetchData()
   }
 
@@ -169,6 +187,7 @@ export default function OrcamentosClient({
     setEditingBudgetId(orc.id)
     setClienteSearch(orc.client?.nome || '')
     setProjetoId(orc.project_id || '')
+    setNovaObraNome('')
     setItens(orc.itens as any || [])
     setMaoDeObra(orc.mao_de_obra.toString())
     setNotas(orc.notas || '')
@@ -305,7 +324,17 @@ export default function OrcamentosClient({
           <select value={projetoId} onChange={(e) => setProjetoId(e.target.value)} className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none font-medium">
             <option value="">Atribuir à Obra (opcional)</option>
             {projetos.map((p) => (<option key={p.id} value={p.id}>{p.nome}</option>))}
+            <option value={NOVA_OBRA_VALUE}>+ Criar nova obra</option>
           </select>
+          {projetoId === NOVA_OBRA_VALUE && (
+            <input
+              type="text"
+              value={novaObraNome}
+              onChange={(e) => setNovaObraNome(e.target.value)}
+              placeholder="Nome da nova obra"
+              className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
+            />
+          )}
 
           {/* Items */}
           <div className="space-y-3 pt-2">
@@ -370,7 +399,7 @@ export default function OrcamentosClient({
           {error && <p className="text-sm text-red-600 text-center">{error}</p>}
 
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => { setShowForm(false); setEditingBudgetId(null); }} className="flex-1 py-3.5 rounded-2xl bg-slate-100 text-slate-600 font-bold active:scale-[0.98] transition-transform">Cancelar</button>
+            <button type="button" onClick={() => { setShowForm(false); setEditingBudgetId(null); setNovaObraNome(''); }} className="flex-1 py-3.5 rounded-2xl bg-slate-100 text-slate-600 font-bold active:scale-[0.98] transition-transform">Cancelar</button>
             <button type="submit" disabled={saving} className="flex-[2] py-3.5 rounded-2xl btn-primary-gradient font-bold active:scale-[0.98] transition-transform disabled:opacity-50 text-white">
               {saving ? 'A guardar...' : (editingBudgetId ? 'Atualizar Orçamento' : 'Guardar Orçamento')}
             </button>

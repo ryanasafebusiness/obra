@@ -33,7 +33,7 @@ export default function BetaoPage() {
     setError(null)
   }
 
-  const handleSalvar = async (editedResult: any) => {
+  const handleSalvar = async (editedResult: any, projeto: { projetoId: string; novaObraNome: string }) => {
     if (!editedResult) return
     setSaving(true)
     setError(null)
@@ -48,6 +48,8 @@ export default function BetaoPage() {
         proporcao: tipoBetao
       },
       resultado: editedResult,
+      projetoId: projeto.projetoId,
+      novaObraNome: projeto.novaObraNome,
     })
 
     setSaving(false)

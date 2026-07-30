@@ -11,12 +11,12 @@ export default async function HistoricoPage() {
 
   const { data: calculations } = await supabase
     .from('calculations')
-    .select('*')
+    .select('*, project:projects(id, nome)')
     .eq('user_id', user?.id)
     .order('created_at', { ascending: false })
     .limit(50)
 
-  const items = (calculations || []) as Calculation[]
+  const items = (calculations || []) as (Calculation & { project?: { id: string; nome: string } | null })[]
 
   return (
     <div className="px-5 pt-8 pb-8 max-w-lg mx-auto w-full">
@@ -43,6 +43,9 @@ export default async function HistoricoPage() {
                   <p className="text-xs text-slate-400">
                     {modulo?.nome || calc.tipo} · {formatDate(calc.created_at)}
                   </p>
+                  {calc.project && (
+                    <p className="text-xs text-primary font-medium mt-0.5 truncate">Obra: {calc.project.nome}</p>
+                  )}
                 </div>
                 {typeof custo === 'number' && (
                   <p className="font-bold text-slate-800 flex-shrink-0">{formatCurrency(custo)}</p>

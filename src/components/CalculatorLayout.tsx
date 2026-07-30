@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Save, Calculator, CheckCircle2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
+import { NOVA_OBRA_VALUE } from '@/lib/projects'
 
 interface Material {
   nome: string
@@ -10,12 +12,17 @@ interface Material {
   preco_estimado: number
 }
 
+interface ProjectSelection {
+  projetoId: string
+  novaObraNome: string
+}
+
 interface CalculatorLayoutProps {
   title: string
   icon?: string
   children: React.ReactNode // Form elements go here
   onCalculate: (e: React.FormEvent) => void
-  onSave: (editedResult: any) => void
+  onSave: (editedResult: any, projeto: ProjectSelection) => void
   saving: boolean
   saved: boolean
   error?: string | null
@@ -39,7 +46,11 @@ export function CalculatorLayout({
   resultado,
   renderResultHeader
 }: CalculatorLayoutProps) {
+  const supabase = createClient()
   const [editedMateriais, setEditedMateriais] = useState<EditableMaterial[]>([])
+  const [projetos, setProjetos] = useState<{ id: string; nome: string }[]>([])
+  const [projetoId, setProjetoId] = useState('')
+  const [novaObraNome, setNovaObraNome] = useState('')
 
   useEffect(() => {
     if (resultado) {
@@ -53,6 +64,24 @@ export function CalculatorLayout({
       )
     }
   }, [resultado])
+
+  useEffect(() => {
+    // Padrão de "fetch on mount": o setState só acontece depois do primeiro
+    // await, não sincronamente no efeito.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    const fetchProjetos = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase
+        .from('projects')
+        .select('id, nome')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+      setProjetos(data || [])
+    }
+    fetchProjetos()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handlePriceChange = (index: number, val: string) => {
     const updated = [...editedMateriais]
@@ -70,7 +99,7 @@ export function CalculatorLayout({
       materiais: editedMateriais.map(({ preco_total_editavel, ...m }) => m),
       custo_total_materiais: currentTotalMateriais
     }
-    onSave(editedResult as any)
+    onSave(editedResult as any, { projetoId, novaObraNome })
   }
 
   return (
@@ -143,6 +172,31 @@ export function CalculatorLayout({
               <p className="font-bold text-slate-800">Total materiais</p>
               <p className="text-2xl font-black text-primary">{formatCurrency(currentTotalMateriais)}</p>
             </div>
+          </div>
+
+          {/* Link to obra */}
+          <div className="floating-card p-6">
+            <h3 className="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wider">Atribuir a uma obra</h3>
+            <select
+              value={projetoId}
+              onChange={(e) => setProjetoId(e.target.value)}
+              disabled={saved}
+              className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none transition-all disabled:opacity-60"
+            >
+              <option value="">Sem obra (fica como rascunho avulso)</option>
+              {projetos.map((p) => (<option key={p.id} value={p.id}>{p.nome}</option>))}
+              <option value={NOVA_OBRA_VALUE}>+ Criar nova obra</option>
+            </select>
+            {projetoId === NOVA_OBRA_VALUE && (
+              <input
+                type="text"
+                value={novaObraNome}
+                onChange={(e) => setNovaObraNome(e.target.value)}
+                placeholder="Nome da nova obra"
+                disabled={saved}
+                className="w-full mt-3 px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all disabled:opacity-60"
+              />
+            )}
           </div>
 
           <button

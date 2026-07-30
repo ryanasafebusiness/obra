@@ -1,11 +1,14 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Calculation } from '@/types/database'
+import { resolveProjectId } from '@/lib/projects'
 
 interface SaveCalculationParams {
   tipo: Calculation['tipo']
   nome: string
   dados: Record<string, unknown>
   resultado: unknown
+  projetoId?: string
+  novaObraNome?: string
 }
 
 // Shared by all calculator pages so the "guardar" flow behaves the same
@@ -20,8 +23,21 @@ export async function saveCalculation(
     return { error: 'Sessão expirada. Inicie sessão novamente.' }
   }
 
+  let projectId: string | null = null
+  if (params.projetoId) {
+    const resolved = await resolveProjectId(supabase, user.id, {
+      projetoId: params.projetoId,
+      novaObraNome: params.novaObraNome || '',
+    })
+    if (resolved.error) {
+      return { error: resolved.error }
+    }
+    projectId = resolved.projectId
+  }
+
   const { error: calcError } = await supabase.from('calculations').insert({
     user_id: user.id,
+    project_id: projectId,
     tipo: params.tipo,
     nome: params.nome,
     dados: params.dados,
@@ -55,6 +71,7 @@ export async function saveCalculation(
 
     const { error: budgetError } = await supabase.from('budgets').insert({
       user_id: user.id,
+      project_id: projectId,
       numero: numero,
       itens: itens,
       mao_de_obra: 0,
