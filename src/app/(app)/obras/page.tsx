@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Plus, MapPin, Wrench, Package, ArrowRight } from 'lucide-react'
+import { Plus, MapPin, Wrench, Package, ArrowRight, HardHat } from 'lucide-react'
 import type { Project } from '@/types/database'
 
 type ProjectWithRelations = Project & {
@@ -115,53 +115,15 @@ export default async function ObrasPage() {
             )
           })
         ) : (
-          /* Mock Data based on user prompt if no projects */
-          <div className="block floating-card overflow-hidden hover:border-primary/30 transition-all card-hover animate-slide-up" style={{ animationDelay: '0.1s' }}>
-            <div className="p-5">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h3 className="text-lg font-bold text-slate-800">Apartamento T2</h3>
-                  <p className="text-sm text-slate-500 flex items-center gap-1 mt-1">
-                    <MapPin className="w-3.5 h-3.5" />
-                    Lisboa
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2.5 mt-4">
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center flex-shrink-0">
-                    <Wrench className="w-3.5 h-3.5 text-slate-400" />
-                  </div>
-                  <span className="text-slate-500">Serviço:</span>
-                  <span className="font-semibold text-slate-700">Pintura interior</span>
-                </div>
-
-                <div className="flex items-start gap-2 text-sm">
-                  <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Package className="w-3.5 h-3.5 text-slate-400" />
-                  </div>
-                  <div>
-                    <span className="text-slate-500">Materiais:</span>
-                    <p className="font-semibold text-slate-700 mt-0.5 leading-snug">
-                      10L tinta, 3 rolos, Fita proteção
-                    </p>
-                  </div>
-                </div>
-              </div>
+          <div className="text-center p-10 bg-slate-50 border border-slate-100 rounded-2xl">
+            <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
+              <HardHat className="w-8 h-8" />
             </div>
-
-            <div className="bg-orange-50 px-5 py-3 border-t border-orange-100 flex items-center justify-between">
-              <div>
-                <p className="text-[11px] text-orange-600/70 font-bold uppercase tracking-wider">Valor Final</p>
-                <p className="text-xl font-black text-orange-600">
-                  €680
-                </p>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-primary shadow-sm">
-                <ArrowRight className="w-4 h-4" />
-              </div>
-            </div>
+            <h3 className="text-lg font-bold text-slate-800 mb-2">Ainda não tem obras</h3>
+            <p className="text-sm text-slate-500 mb-6">Registe as suas obras para gerir materiais, orçamentos e serviços de forma organizada.</p>
+            <Link href="/obras/nova" className="inline-block px-6 py-3 rounded-full btn-primary-gradient font-bold shadow-md text-white">
+              Nova Obra
+            </Link>
           </div>
         )}
       </div>
