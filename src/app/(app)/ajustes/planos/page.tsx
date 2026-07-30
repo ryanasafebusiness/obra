@@ -16,13 +16,19 @@ export default function PlanosPage() {
   const [upgrading, setUpgrading] = useState<string | null>(null)
   const [upgradeError, setUpgradeError] = useState<string | null>(null)
   const [checkoutResult, setCheckoutResult] = useState<'sucesso' | 'cancelado' | null>(null)
+  const [trialNecessario, setTrialNecessario] = useState(false)
 
   useEffect(() => {
     fetchProfile()
 
-    const checkout = new URLSearchParams(window.location.search).get('checkout')
+    const params = new URLSearchParams(window.location.search)
+    const checkout = params.get('checkout')
     if (checkout === 'sucesso' || checkout === 'cancelado') {
       setCheckoutResult(checkout)
+      router.replace('/ajustes/planos')
+    }
+    if (params.get('trial') === 'necessario') {
+      setTrialNecessario(true)
       router.replace('/ajustes/planos')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -116,7 +122,13 @@ export default function PlanosPage() {
         </div>
       )}
 
-      {semPlanoAtivo && (
+      {trialNecessario && (
+        <div className="mb-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 text-sm font-medium px-4 py-3 text-center animate-slide-down">
+          Precisa de um plano ativo para usar a app. Comece o teste grátis de 14 dias abaixo.
+        </div>
+      )}
+
+      {semPlanoAtivo && !trialNecessario && (
         <div className="rounded-xl bg-primary/5 border border-primary/20 px-3 py-2.5 text-center mb-4">
           <p className="text-xs font-semibold text-primary">Sem plano ativo</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">Comece um teste grátis de 14 dias — só pedimos o cartão para ativar.</p>

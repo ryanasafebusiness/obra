@@ -45,6 +45,28 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Rotas que exigem plano ativo (trial ou pago) — /ajustes fica de fora
+  // porque é lá que o utilizador ativa o trial.
+  const planGatedPaths = ['/dashboard', '/calcular', '/clientes', '/orcamentos', '/obras']
+  const isPlanGatedPath = planGatedPaths.some((path) =>
+    request.nextUrl.pathname.startsWith(path)
+  )
+
+  if (isPlanGatedPath && user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('plano')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (profile?.plano !== 'pro') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/ajustes/planos'
+      url.searchParams.set('trial', 'necessario')
+      return NextResponse.redirect(url)
+    }
+  }
+
   // Redirect logged-in users away from auth pages
   const authPaths = ['/login', '/registro']
   const isAuthPath = authPaths.some((path) =>
