@@ -26,7 +26,7 @@ interface CalculatorLayoutProps {
   renderResultHeader?: () => React.ReactNode // Custom result details like Area, Litros
 }
 
-type EditableMaterial = Material & { preco_unitario_editavel: string }
+type EditableMaterial = Material & { preco_total_editavel: string }
 
 export function CalculatorLayout({
   title,
@@ -45,10 +45,9 @@ export function CalculatorLayout({
     if (resultado) {
       setEditedMateriais(
         resultado.materiais.map(m => {
-          const unitPrice = m.quantidade > 0 ? m.preco_estimado / m.quantidade : 0
           return {
             ...m,
-            preco_unitario_editavel: unitPrice > 0 ? String(unitPrice) : ''
+            preco_total_editavel: m.preco_estimado > 0 ? String(m.preco_estimado) : ''
           }
         })
       )
@@ -57,8 +56,8 @@ export function CalculatorLayout({
 
   const handlePriceChange = (index: number, val: string) => {
     const updated = [...editedMateriais]
-    updated[index].preco_unitario_editavel = val
-    updated[index].preco_estimado = (parseFloat(val) || 0) * updated[index].quantidade
+    updated[index].preco_total_editavel = val
+    updated[index].preco_estimado = parseFloat(val) || 0
     setEditedMateriais(updated)
   }
 
@@ -68,7 +67,7 @@ export function CalculatorLayout({
     if (!resultado) return
     const editedResult = {
       ...resultado,
-      materiais: editedMateriais.map(({ preco_unitario_editavel, ...m }) => m),
+      materiais: editedMateriais.map(({ preco_total_editavel, ...m }) => m),
       custo_total_materiais: currentTotalMateriais
     }
     onSave(editedResult as any)
@@ -122,26 +121,20 @@ export function CalculatorLayout({
             <h3 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Custo Estimado (Editável)</h3>
             <div className="space-y-3">
               {editedMateriais.map((mat, i) => (
-                <div key={i} className="flex flex-col gap-2 py-3 border-b border-slate-100 last:border-0">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-slate-700">{mat.nome}</p>
-                      <p className="text-sm text-slate-400">{mat.quantidade} {mat.unidade}</p>
-                    </div>
-                    <p className="font-bold text-slate-800">{formatCurrency(mat.preco_estimado)}</p>
+                <div key={i} className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+                  <div>
+                    <p className="font-semibold text-slate-700">{mat.nome}</p>
+                    <p className="text-sm text-slate-400">{mat.quantidade} {mat.unidade}</p>
                   </div>
-                  <div className="flex items-center justify-end gap-2 mt-1">
-                    <span className="text-xs font-medium text-slate-400">Preço unitário:</span>
-                    <div className="relative w-24">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium text-sm">€</span>
-                      <input 
-                        type="number" 
-                        step="0.01"
-                        value={mat.preco_unitario_editavel || ''}
-                        onChange={(e) => handlePriceChange(i, e.target.value)}
-                        className="w-full pl-7 pr-2 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium transition-all"
-                      />
-                    </div>
+                  <div className="relative w-28">
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">€</span>
+                    <input 
+                      type="number" 
+                      step="0.01"
+                      value={mat.preco_total_editavel}
+                      onChange={(e) => handlePriceChange(i, e.target.value)}
+                      className="w-full pl-3 pr-8 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-right transition-all"
+                    />
                   </div>
                 </div>
               ))}
