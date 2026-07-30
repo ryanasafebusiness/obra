@@ -52,7 +52,7 @@ export default function PlanosPage() {
     }
   }
 
-  const handleUpgrade = async (plano: 'pro' | 'empresa') => {
+  const handleUpgrade = async (plano: 'pro') => {
     setUpgrading(plano)
     setUpgradeError(null)
 
@@ -92,15 +92,9 @@ export default function PlanosPage() {
       features: ['Cálculos ilimitados', 'Clientes ilimitados', 'PDFs', 'Histórico completo', 'Banco de materiais'],
       destaque: true,
     },
-    {
-      id: 'empresa',
-      nome: 'Empresa',
-      preco: '29,99€/mês',
-      features: ['Tudo do Pro', 'Vários trabalhadores', 'Gestão de equipa', 'Obras ilimitadas'],
-    },
   ]
 
-  const semPlanoAtivo = profile?.plano !== 'pro' && profile?.plano !== 'empresa'
+  const semPlanoAtivo = profile?.plano !== 'pro'
 
   return (
     <div className="px-4 pt-6 pb-4 max-w-lg mx-auto w-full animate-slide-right">
@@ -164,9 +158,9 @@ export default function PlanosPage() {
                 </li>
               ))}
             </ul>
-            {profile?.plano !== plano.id && (plano.id === 'pro' || plano.id === 'empresa') && (
+            {profile?.plano !== plano.id && plano.id === 'pro' && (
               <button
-                onClick={() => handleUpgrade(plano.id as 'pro' | 'empresa')}
+                onClick={() => handleUpgrade(plano.id as 'pro')}
                 disabled={upgrading !== null}
                 className="w-full mt-5 py-3 rounded-xl bg-primary text-white font-semibold shadow-lg shadow-orange-500/20 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
               >

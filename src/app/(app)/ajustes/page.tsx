@@ -93,7 +93,7 @@ export default function AjustesMenuPage() {
           <h2 className="text-xl font-bold text-foreground">{nome}</h2>
           <p className="text-sm text-muted-foreground">{email}</p>
           <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium uppercase tracking-wider">
-            {plano === 'pro' || plano === 'empresa' ? plano : 'sem plano'}
+            {plano === 'pro' ? plano : 'sem plano'}
           </span>
         </div>
       </div>
