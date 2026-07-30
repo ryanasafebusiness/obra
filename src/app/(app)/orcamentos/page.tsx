@@ -18,6 +18,7 @@ export default function OrcamentosPage() {
   const [clientes, setClientes] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [editingBudgetId, setEditingBudgetId] = useState<string | null>(null)
 
   // Form fields
   const [clienteId, setClienteId] = useState('')
@@ -83,32 +84,61 @@ export default function OrcamentosPage() {
       return
     }
 
-    const { error: insertError } = await supabase.from('budgets').insert({
-      user_id: user.id,
-      client_id: clienteId || null,
-      numero: gerarNumeroOrcamento(),
-      itens: itens.map(item => ({ ...item, total: item.quantidade * item.preco_unitario })),
-      mao_de_obra: maoDeObraVal,
-      materiais_total: subtotalMateriais,
-      iva: 23,
-      total,
-      notas: notas || null,
-      status: 'rascunho',
-    })
-
-    setSaving(false)
-
-    if (insertError) {
-      setError(insertError.message)
-      return
+    if (editingBudgetId) {
+      const { error: updateError } = await supabase.from('budgets').update({
+        client_id: clienteId || null,
+        itens: itens.map(item => ({ ...item, total: item.quantidade * item.preco_unitario })),
+        mao_de_obra: maoDeObraVal,
+        materiais_total: subtotalMateriais,
+        iva: 23,
+        total,
+        notas: notas || null,
+      }).eq('id', editingBudgetId)
+      
+      if (updateError) {
+        setError(updateError.message)
+        setSaving(false)
+        return
+      }
+    } else {
+      const { error: insertError } = await supabase.from('budgets').insert({
+        user_id: user.id,
+        client_id: clienteId || null,
+        numero: gerarNumeroOrcamento(),
+        itens: itens.map(item => ({ ...item, total: item.quantidade * item.preco_unitario })),
+        mao_de_obra: maoDeObraVal,
+        materiais_total: subtotalMateriais,
+        iva: 23,
+        total,
+        notas: notas || null,
+        status: 'rascunho',
+      })
+      
+      if (insertError) {
+        setError(insertError.message)
+        setSaving(false)
+        return
+      }
     }
 
+    setSaving(false)
     setShowForm(false)
+    setEditingBudgetId(null)
     setItens([{ descricao: '', quantidade: 1, unidade: 'un', preco_unitario: 0 }])
     setMaoDeObra('')
     setNotas('')
     setClienteId('')
     fetchData()
+  }
+
+  const handleEdit = (orc: Budget & { client?: Client }) => {
+    setEditingBudgetId(orc.id)
+    setClienteId(orc.client_id || '')
+    setItens(orc.itens as any || [])
+    setMaoDeObra(orc.mao_de_obra.toString())
+    setNotas(orc.notas || '')
+    setShowForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const enviarWhatsApp = (orc: Budget & { client?: Client }) => {
@@ -195,7 +225,7 @@ export default function OrcamentosPage() {
       {showForm && (
         <form onSubmit={handleSubmit} className="floating-card p-5 mb-8 space-y-4 animate-slide-up">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg font-bold text-slate-800">Novo Orçamento</h3>
+            <h3 className="text-lg font-bold text-slate-800">{editingBudgetId ? 'Editar Orçamento' : 'Novo Orçamento'}</h3>
             <div className="p-2 bg-slate-50 rounded-lg"><ReceiptText className="w-5 h-5 text-slate-400" /></div>
           </div>
 
@@ -208,31 +238,45 @@ export default function OrcamentosPage() {
           <div className="space-y-3 pt-2">
             <p className="text-sm font-bold text-slate-700 uppercase tracking-wider">Itens do orçamento</p>
             {itens.map((item, i) => (
-              <div key={i} className="flex gap-2 items-start bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                <div className="flex-1 space-y-2">
-                  <input type="text" value={item.descricao} onChange={(e) => updateItem(i, 'descricao', e.target.value)} placeholder="Descrição do material/serviço" required className="w-full px-3 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
-                  <div className="flex gap-2">
-                    <input type="number" value={item.quantidade || ''} onChange={(e) => updateItem(i, 'quantidade', parseFloat(e.target.value) || 0)} placeholder="Qtd" className="w-20 px-3 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
-                    <input type="text" value={item.unidade} onChange={(e) => updateItem(i, 'unidade', e.target.value)} placeholder="un" className="w-16 px-3 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
-                    <input type="number" step="0.01" value={item.preco_unitario || ''} onChange={(e) => updateItem(i, 'preco_unitario', parseFloat(e.target.value) || 0)} placeholder="Preço €" className="flex-1 px-3 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              <div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-100 relative">
+                <button type="button" onClick={() => removeItem(i)} className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center font-bold shadow-sm">×</button>
+                <input required placeholder="Descrição (ex: Placa Pladur)" value={item.descricao} onChange={(e) => updateItem(i, 'descricao', e.target.value)} className="w-full px-3 py-2.5 rounded-lg bg-white border border-slate-200 text-slate-800 mb-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium" />
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Qtd</label>
+                    <input type="number" required min="0.01" step="0.01" value={item.quantidade} onChange={(e) => updateItem(i, 'quantidade', parseFloat(e.target.value))} className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium" />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Unid</label>
+                    <input required placeholder="m², un" value={item.unidade} onChange={(e) => updateItem(i, 'unidade', e.target.value)} className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium" />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Preço (€)</label>
+                    <input type="number" required step="0.01" value={item.preco_unitario} onChange={(e) => updateItem(i, 'preco_unitario', parseFloat(e.target.value))} className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium" />
                   </div>
                 </div>
-                {itens.length > 1 && (
-                  <button type="button" onClick={() => removeItem(i)} className="p-2 text-red-400 hover:bg-red-50 rounded-xl mt-1 transition-colors">✕</button>
-                )}
               </div>
             ))}
-            <button type="button" onClick={addItem} className="text-sm text-primary font-bold flex items-center gap-1 hover:underline">
-              <Plus className="w-4 h-4" /> Adicionar item
+            <button type="button" onClick={addItem} className="w-full py-3 rounded-xl border-2 border-dashed border-slate-200 text-slate-600 font-bold flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors">
+              <Plus className="w-5 h-5" /> Adicionar item
             </button>
           </div>
 
-          <div className="pt-2">
-            <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wider">Mão de obra (€)</label>
-            <input type="number" step="0.01" value={maoDeObra} onChange={(e) => setMaoDeObra(e.target.value)} placeholder="0.00" className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+          <div className="grid grid-cols-2 gap-4 pt-2">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Mão de obra (€)</label>
+              <input type="number" step="0.01" value={maoDeObra} onChange={(e) => setMaoDeObra(e.target.value)} placeholder="Ex: 500.00" className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">IVA (%)</label>
+              <input type="number" value="23" disabled className="w-full px-4 py-3.5 rounded-2xl bg-slate-100 border border-slate-200 text-slate-400 font-medium cursor-not-allowed" />
+            </div>
           </div>
 
-          <textarea value={notas} onChange={(e) => setNotas(e.target.value)} placeholder="Notas (opcional)" rows={2} className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none" />
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Notas / Condições</label>
+            <textarea value={notas} onChange={(e) => setNotas(e.target.value)} placeholder="Ex: Validade de 30 dias..." rows={3} className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none" />
+          </div>
 
           {/* Totals preview */}
           <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-5 space-y-2 mt-4 text-white shadow-lg">
@@ -253,9 +297,9 @@ export default function OrcamentosPage() {
           {error && <p className="text-sm text-red-600 text-center">{error}</p>}
 
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-3.5 rounded-2xl bg-slate-100 text-slate-600 font-bold active:scale-[0.98] transition-transform">Cancelar</button>
-            <button type="submit" disabled={saving} className="flex-[2] py-3.5 rounded-2xl btn-primary-gradient font-bold active:scale-[0.98] transition-transform disabled:opacity-50">
-              {saving ? 'A criar...' : 'Guardar Orçamento'}
+            <button type="button" onClick={() => { setShowForm(false); setEditingBudgetId(null); }} className="flex-1 py-3.5 rounded-2xl bg-slate-100 text-slate-600 font-bold active:scale-[0.98] transition-transform">Cancelar</button>
+            <button type="submit" disabled={saving} className="flex-[2] py-3.5 rounded-2xl btn-primary-gradient font-bold active:scale-[0.98] transition-transform disabled:opacity-50 text-white">
+              {saving ? 'A guardar...' : (editingBudgetId ? 'Atualizar Orçamento' : 'Guardar Orçamento')}
             </button>
           </div>
         </form>
@@ -325,11 +369,14 @@ export default function OrcamentosPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="p-4 pt-0 flex gap-3">
-                  <button onClick={() => enviarWhatsApp(orc)} className="flex-[2] py-3.5 rounded-xl bg-[#25D366] text-white font-bold flex items-center justify-center gap-2 hover:bg-[#20bd5a] transition-colors shadow-lg shadow-[#25D366]/20">
+                <div className="p-4 pt-0 grid grid-cols-2 gap-3">
+                  <button onClick={() => enviarWhatsApp(orc)} className="col-span-2 py-3.5 rounded-xl bg-[#25D366] text-white font-bold flex items-center justify-center gap-2 hover:bg-[#20bd5a] transition-colors shadow-lg shadow-[#25D366]/20">
                     <Send className="w-4 h-4" /> Enviar WhatsApp
                   </button>
-                  <button onClick={() => gerarPDF(orc)} className="flex-1 py-3.5 rounded-xl bg-slate-100 text-slate-700 font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-colors">
+                  <button onClick={() => handleEdit(orc)} className="py-3.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold flex items-center justify-center hover:bg-slate-50 transition-colors">
+                    Editar
+                  </button>
+                  <button onClick={() => gerarPDF(orc)} className="py-3.5 rounded-xl bg-slate-100 text-slate-700 font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-colors">
                     <Download className="w-4 h-4" /> PDF
                   </button>
                 </div>
