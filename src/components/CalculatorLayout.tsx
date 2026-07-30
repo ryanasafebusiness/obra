@@ -26,7 +26,7 @@ interface CalculatorLayoutProps {
   renderResultHeader?: () => React.ReactNode // Custom result details like Area, Litros
 }
 
-type EditableMaterial = Material & { preco_unitario_editavel: number }
+type EditableMaterial = Material & { preco_unitario_editavel: string }
 
 export function CalculatorLayout({
   title,
@@ -44,19 +44,21 @@ export function CalculatorLayout({
   useEffect(() => {
     if (resultado) {
       setEditedMateriais(
-        resultado.materiais.map(m => ({
-          ...m,
-          preco_unitario_editavel: m.quantidade > 0 ? m.preco_estimado / m.quantidade : 0
-        }))
+        resultado.materiais.map(m => {
+          const unitPrice = m.quantidade > 0 ? m.preco_estimado / m.quantidade : 0
+          return {
+            ...m,
+            preco_unitario_editavel: unitPrice > 0 ? String(unitPrice) : ''
+          }
+        })
       )
     }
   }, [resultado])
 
   const handlePriceChange = (index: number, val: string) => {
-    const newPrice = parseFloat(val) || 0
     const updated = [...editedMateriais]
-    updated[index].preco_unitario_editavel = newPrice
-    updated[index].preco_estimado = newPrice * updated[index].quantidade
+    updated[index].preco_unitario_editavel = val
+    updated[index].preco_estimado = (parseFloat(val) || 0) * updated[index].quantidade
     setEditedMateriais(updated)
   }
 
@@ -69,9 +71,6 @@ export function CalculatorLayout({
       materiais: editedMateriais.map(({ preco_unitario_editavel, ...m }) => m),
       custo_total_materiais: currentTotalMateriais
     }
-    // We pass the editedResult to the parent's onSave!
-    // But since the interface says `onSave: () => void`, we need to change it.
-    // Wait, let's fix the interface above!
     onSave(editedResult as any)
   }
 
