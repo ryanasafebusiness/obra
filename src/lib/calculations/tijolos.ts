@@ -5,9 +5,16 @@ export interface TijolosInput {
   cliente_id?: string
   comprimento_parede: number
   altura_parede: number
-  tipo_bloco: string // id from BLOCK_TYPES
+  tipo_bloco: string // nome legível, ex: "Tijolo 11"
   blocos_por_m2: number
   margem_desperdicio: number
+}
+
+// Preços por unidade — vêm da tabela `materials` quando disponíveis.
+export interface TijolosPrecos {
+  bloco_un?: number
+  cimento_saco?: number
+  areia_m3?: number
 }
 
 export interface TijolosResult {
@@ -22,7 +29,7 @@ export interface TijolosResult {
   custo_total_materiais: number
 }
 
-export function calcularTijolos(input: TijolosInput): TijolosResult {
+export function calcularTijolos(input: TijolosInput, precos: TijolosPrecos = {}): TijolosResult {
   const area_parede = input.comprimento_parede * input.altura_parede
   const area_com_margem = area_parede * (1 + input.margem_desperdicio / 100)
   const quantidade_blocos = Math.ceil(area_com_margem * input.blocos_por_m2)
@@ -31,24 +38,28 @@ export function calcularTijolos(input: TijolosInput): TijolosResult {
   const sacos_cimento = Math.ceil((area_com_margem * 12) / 25) // 12kg per m², sacos de 25kg
   const areia_m3 = Math.ceil(area_com_margem * 0.03 * 10) / 10
 
+  const precoBloco = precos.bloco_un ?? 0.6
+  const precoCimento = precos.cimento_saco ?? 6
+  const precoAreia = precos.areia_m3 ?? 30
+
   const materiais = [
     {
       nome: `Blocos ${input.tipo_bloco}`,
       quantidade: quantidade_blocos,
       unidade: 'un',
-      preco_estimado: quantidade_blocos * 0.6, // avg price per block
+      preco_estimado: quantidade_blocos * precoBloco,
     },
     {
       nome: 'Cimento para argamassa (25kg)',
       quantidade: sacos_cimento,
       unidade: 'saco',
-      preco_estimado: sacos_cimento * 6,
+      preco_estimado: sacos_cimento * precoCimento,
     },
     {
       nome: 'Areia',
       quantidade: areia_m3,
       unidade: 'm³',
-      preco_estimado: Math.ceil(areia_m3) * 30,
+      preco_estimado: Math.ceil(areia_m3) * precoAreia,
     },
   ]
 

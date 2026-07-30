@@ -233,9 +233,9 @@ export function CalculatorLayout({
 }
 
 export function FormInput({ 
-  label, value, onChange, placeholder, type = "text", step, required = false, unit 
+  label, value, onChange, placeholder, type = "text", step, required = false, unit, helpText 
 }: { 
-  label: string, value: string, onChange: (val: string) => void, placeholder?: string, type?: string, step?: string, required?: boolean, unit?: string 
+  label: string, value: string, onChange: (val: string) => void, placeholder?: string, type?: string, step?: string, required?: boolean, unit?: string, helpText?: string 
 }) {
   return (
     <div>
@@ -252,6 +252,7 @@ export function FormInput({
         />
         {unit && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">{unit}</span>}
       </div>
+      {helpText && <p className="mt-1.5 text-xs text-slate-500">{helpText}</p>}
     </div>
   )
 }

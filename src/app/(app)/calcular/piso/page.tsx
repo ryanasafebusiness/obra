@@ -1,14 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { calcularPiso, type PisoResult } from '@/lib/calculations/piso'
 import { saveCalculation } from '@/lib/calculations/save'
 import { createClient } from '@/lib/supabase/client'
 import { formatNumber } from '@/lib/utils'
+import { fetchPrecosCategoria, precoMedioPorTermo, type MaterialPreco } from '@/lib/materials'
 import { CalculatorLayout, FormInput, ResultRow } from '@/components/CalculatorLayout'
+
+// Liga o valor escolhido no <select> ao termo de pesquisa na tabela
+// materials e ao preço médio por omissão (caso não haja correspondência).
+const TIPO_PISO_INFO: Record<string, { termo: string; fallback: number }> = {
+  flutuante: { termo: 'Flutuante', fallback: 12 },
+  vinilico: { termo: 'Vinílico', fallback: 18 },
+  ceramico: { termo: 'Cerâmico', fallback: 15 },
+}
 
 export default function PisoPage() {
   const supabase = createClient()
+  const [precos, setPrecos] = useState<MaterialPreco[]>([])
   const [nome, setNome] = useState('')
   const [comprimento, setComprimento] = useState('')
   const [largura, setLargura] = useState('')
@@ -20,16 +30,31 @@ export default function PisoPage() {
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchPrecosCategoria(supabase, 'piso').then(setPrecos)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleCalcular = (e: React.FormEvent) => {
     e.preventDefault()
-    const result = calcularPiso({
-      nome: nome || 'Colocação de Piso',
-      comprimento: parseFloat(comprimento),
-      largura: parseFloat(largura),
-      tipo_piso: tipoPiso,
-      m2_por_caixa: parseFloat(m2PorCaixa),
-      margem_desperdicio: parseFloat(margem)
-    })
+    const tipoInfo = TIPO_PISO_INFO[tipoPiso] || TIPO_PISO_INFO.flutuante
+    const result = calcularPiso(
+      {
+        nome: nome || 'Colocação de Piso',
+        comprimento: parseFloat(comprimento),
+        largura: parseFloat(largura),
+        tipo_piso: tipoPiso,
+        m2_por_caixa: parseFloat(m2PorCaixa),
+        margem_desperdicio: parseFloat(margem)
+      },
+      {
+        pavimento_m2: precoMedioPorTermo(precos, tipoInfo.termo, tipoInfo.fallback),
+        cola: precoMedioPorTermo(precos, 'Cola', 15),
+        rejunte: precoMedioPorTermo(precos, 'Rejunte', 8),
+        espacadores: precoMedioPorTermo(precos, 'Espaçadores', 2),
+      }
+    )
     setResultado(result)
     setSaved(false)
     setError(null)
@@ -79,11 +104,11 @@ export default function PisoPage() {
         </>
       )}
     >
-      <FormInput label="Nome da obra" value={nome} onChange={setNome} placeholder="Ex: Chão da sala" />
+      <FormInput label="Nome da obra" value={nome} onChange={setNome} placeholder="Ex: Chão da sala" helpText="Identificação para guardar o cálculo." />
       
       <div className="grid grid-cols-2 gap-4">
-        <FormInput label="Comprimento" type="number" step="0.1" required value={comprimento} onChange={setComprimento} placeholder="5.0" unit="m" />
-        <FormInput label="Largura" type="number" step="0.1" required value={largura} onChange={setLargura} placeholder="4.0" unit="m" />
+        <FormInput label="Comprimento" type="number" step="0.1" required value={comprimento} onChange={setComprimento} placeholder="5.0" unit="m" helpText="Medida linear." />
+        <FormInput label="Largura" type="number" step="0.1" required value={largura} onChange={setLargura} placeholder="4.0" unit="m" helpText="Medida linear." />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -98,11 +123,13 @@ export default function PisoPage() {
             <option value="vinilico">Piso Vinílico</option>
             <option value="ceramico">Cerâmico</option>
           </select>
+          <p className="mt-1.5 text-xs text-slate-500">O material a aplicar.</p>
         </div>
-        <FormInput label="m² por Caixa" type="number" step="0.1" required value={m2PorCaixa} onChange={setM2PorCaixa} placeholder="2.4" unit="m²" />
+        <div className="space-y-4">
+          <FormInput label="m²/Caixa" type="number" step="0.01" required value={m2PorCaixa} onChange={setM2PorCaixa} placeholder="2.4" helpText="Ver na embalagem." />
+          <FormInput label="Margem" type="number" step="1" required value={margem} onChange={setMargem} placeholder="10" unit="%" helpText="Cortes e rodapés." />
+        </div>
       </div>
-
-      <FormInput label="Margem de desperdício" type="number" step="1" required value={margem} onChange={setMargem} placeholder="10" unit="%" />
     </CalculatorLayout>
   )
 }

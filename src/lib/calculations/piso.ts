@@ -10,6 +10,14 @@ export interface PisoInput {
   margem_desperdicio: number // percentage, e.g. 10 for 10%
 }
 
+// Preços por unidade — vêm da tabela `materials` quando disponíveis.
+export interface PisoPrecos {
+  pavimento_m2?: number
+  cola?: number
+  rejunte?: number
+  espacadores?: number
+}
+
 export interface PisoResult {
   area: number
   area_com_margem: number
@@ -23,35 +31,40 @@ export interface PisoResult {
   custo_total_materiais: number
 }
 
-export function calcularPiso(input: PisoInput): PisoResult {
+export function calcularPiso(input: PisoInput, precos: PisoPrecos = {}): PisoResult {
   const area = input.comprimento * input.largura
   const area_com_margem = area * (1 + input.margem_desperdicio / 100)
   const caixas_necessarias = Math.ceil(area_com_margem / input.m2_por_caixa)
+
+  const precoPavimentoM2 = precos.pavimento_m2 ?? 10
+  const precoCola = precos.cola ?? 15
+  const precoRejunte = precos.rejunte ?? 8
+  const precoEspacadores = precos.espacadores ?? 2
 
   const materiais = [
     {
       nome: `${input.tipo_piso} (caixas)`,
       quantidade: caixas_necessarias,
       unidade: 'cx',
-      preco_estimado: caixas_necessarias * 25, // avg price per box
+      preco_estimado: area_com_margem * precoPavimentoM2,
     },
     {
       nome: 'Cola para pavimento',
       quantidade: Math.ceil(area_com_margem / 5), // 1 saco per 5m²
       unidade: 'saco 25kg',
-      preco_estimado: Math.ceil(area_com_margem / 5) * 15,
+      preco_estimado: Math.ceil(area_com_margem / 5) * precoCola,
     },
     {
       nome: 'Rejunte',
       quantidade: Math.ceil(area_com_margem / 3), // 1 saco per 3m²
       unidade: 'saco 5kg',
-      preco_estimado: Math.ceil(area_com_margem / 3) * 8,
+      preco_estimado: Math.ceil(area_com_margem / 3) * precoRejunte,
     },
     {
       nome: 'Espaçadores',
       quantidade: Math.ceil(area_com_margem / 2), // 1 saco per 2m²
       unidade: 'saco',
-      preco_estimado: Math.ceil(area_com_margem / 2) * 2,
+      preco_estimado: Math.ceil(area_com_margem / 2) * precoEspacadores,
     },
   ]
 

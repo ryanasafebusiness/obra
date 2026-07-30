@@ -12,6 +12,15 @@ export interface AzulejoInput {
   margem_desperdicio: number // percentage
 }
 
+// Preços por unidade — vêm da tabela `materials` quando disponíveis.
+export interface AzulejoPrecos {
+  azulejo_m2?: number
+  cola?: number
+  rejunte?: number
+  espacadores?: number
+  cruzetas?: number
+}
+
 export interface AzulejoResult {
   area_total: number
   area_com_margem: number
@@ -26,7 +35,7 @@ export interface AzulejoResult {
   custo_total_materiais: number
 }
 
-export function calcularAzulejo(input: AzulejoInput): AzulejoResult {
+export function calcularAzulejo(input: AzulejoInput, precos: AzulejoPrecos = {}): AzulejoResult {
   const area_total = input.comprimento_parede * input.altura_parede * input.quantidade_paredes
   const area_com_margem = area_total * (1 + input.margem_desperdicio / 100)
 
@@ -35,36 +44,42 @@ export function calcularAzulejo(input: AzulejoInput): AzulejoResult {
   const pecas_necessarias = Math.ceil(area_com_margem / area_peca)
   const caixas_necessarias = Math.ceil(pecas_necessarias / input.pecas_por_caixa)
 
+  const precoAzulejoM2 = precos.azulejo_m2 ?? 15
+  const precoCola = precos.cola ?? 12
+  const precoRejunte = precos.rejunte ?? 8
+  const precoEspacadores = precos.espacadores ?? 2
+  const precoCruzetas = precos.cruzetas ?? 3
+
   const materiais = [
     {
       nome: 'Azulejos (caixas)',
       quantidade: caixas_necessarias,
       unidade: 'cx',
-      preco_estimado: caixas_necessarias * 20,
+      preco_estimado: area_com_margem * precoAzulejoM2,
     },
     {
       nome: 'Cola para azulejo',
       quantidade: Math.ceil(area_com_margem / 4), // 1 saco per 4m²
       unidade: 'saco 25kg',
-      preco_estimado: Math.ceil(area_com_margem / 4) * 12,
+      preco_estimado: Math.ceil(area_com_margem / 4) * precoCola,
     },
     {
       nome: 'Rejunte',
       quantidade: Math.ceil(area_com_margem / 4),
       unidade: 'saco 5kg',
-      preco_estimado: Math.ceil(area_com_margem / 4) * 8,
+      preco_estimado: Math.ceil(area_com_margem / 4) * precoRejunte,
     },
     {
       nome: 'Espaçadores',
       quantidade: Math.ceil(pecas_necessarias / 100),
       unidade: 'saco 100un',
-      preco_estimado: Math.ceil(pecas_necessarias / 100) * 2,
+      preco_estimado: Math.ceil(pecas_necessarias / 100) * precoEspacadores,
     },
     {
       nome: 'Cruzetas',
       quantidade: Math.ceil(pecas_necessarias / 50),
       unidade: 'saco 50un',
-      preco_estimado: Math.ceil(pecas_necessarias / 50) * 3,
+      preco_estimado: Math.ceil(pecas_necessarias / 50) * precoCruzetas,
     },
   ]
 

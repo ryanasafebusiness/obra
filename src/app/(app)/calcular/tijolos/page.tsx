@@ -86,11 +86,11 @@ export default function TijolosPage() {
         </>
       )}
     >
-      <FormInput label="Nome da obra" value={nome} onChange={setNome} placeholder="Ex: Muro exterior" />
+      <FormInput label="Nome da obra" value={nome} onChange={setNome} placeholder="Ex: Muro exterior" helpText="Identificação para guardar o cálculo." />
       
       <div className="grid grid-cols-2 gap-4">
-        <FormInput label="Comprimento" type="number" step="0.1" required value={comprimento} onChange={setComprimento} placeholder="5.0" unit="m" />
-        <FormInput label="Altura" type="number" step="0.1" required value={altura} onChange={setAltura} placeholder="2.5" unit="m" />
+        <FormInput label="Comprimento" type="number" step="0.1" required value={comprimento} onChange={setComprimento} placeholder="5.0" unit="m" helpText="Medida linear da parede." />
+        <FormInput label="Altura" type="number" step="0.1" required value={altura} onChange={setAltura} placeholder="2.5" unit="m" helpText="Pé direito." />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -101,14 +101,13 @@ export default function TijolosPage() {
             onChange={(e) => setTipoBloco(e.target.value)}
             className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none transition-all"
           >
-            {BLOCK_TYPES.map(bloco => (
-              <option key={bloco.id} value={bloco.id}>
-                {bloco.nome}
-              </option>
+            {BLOCK_TYPES.map(b => (
+              <option key={b.id} value={b.id}>{b.nome}</option>
             ))}
           </select>
+          <p className="mt-1.5 text-xs text-slate-500">O material a aplicar.</p>
         </div>
-        <FormInput label="Margem de desperdício" type="number" step="1" required value={margem} onChange={setMargem} placeholder="10" unit="%" />
+        <FormInput label="Margem" type="number" step="1" required value={margem} onChange={setMargem} placeholder="10" unit="%" helpText="Para cortes/quebras." />
       </div>
     </CalculatorLayout>
   )

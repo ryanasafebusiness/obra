@@ -78,11 +78,11 @@ export default function PladurPage() {
         </>
       )}
     >
-      <FormInput label="Nome da obra" value={nome} onChange={setNome} placeholder="Ex: Parede da sala" />
+      <FormInput label="Nome da obra" value={nome} onChange={setNome} placeholder="Ex: Parede da sala" helpText="Identifique para que parte da obra é este cálculo." />
       
       <div className="grid grid-cols-2 gap-4">
-        <FormInput label="Comprimento" type="number" step="0.1" required value={comprimento} onChange={setComprimento} placeholder="4.0" unit="m" />
-        <FormInput label="Altura" type="number" step="0.1" required value={altura} onChange={setAltura} placeholder="2.5" unit="m" />
+        <FormInput label="Comprimento" type="number" step="0.1" required value={comprimento} onChange={setComprimento} placeholder="4.0" unit="m" helpText="Medida linear." />
+        <FormInput label="Altura" type="number" step="0.1" required value={altura} onChange={setAltura} placeholder="2.5" unit="m" helpText="Pé direito." />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -97,6 +97,7 @@ export default function PladurPage() {
             <option value="hidrofuga">Hidrófuga (Verde - WC)</option>
             <option value="fogo">Corta-Fogo (Rosa)</option>
           </select>
+          <p className="mt-1.5 text-xs text-slate-500">Escolha o material adequado ao ambiente.</p>
         </div>
         <div className="flex flex-col justify-end">
           <label className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors">

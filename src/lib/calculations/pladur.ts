@@ -9,6 +9,16 @@ export interface PladurInput {
   dupla_face: boolean
 }
 
+// Preços por unidade — vêm da tabela `materials` quando disponíveis.
+export interface PladurPrecos {
+  placa?: number
+  montante?: number
+  calha?: number
+  parafusos?: number
+  massa?: number
+  fita?: number
+}
+
 export interface PladurResult {
   area_total: number
   materiais: {
@@ -20,7 +30,7 @@ export interface PladurResult {
   custo_total_materiais: number
 }
 
-export function calcularPladur(input: PladurInput): PladurResult {
+export function calcularPladur(input: PladurInput, precos: PladurPrecos = {}): PladurResult {
   const area_total = input.comprimento * input.altura
   const multiplicador_face = input.dupla_face ? 2 : 1
 
@@ -45,44 +55,50 @@ export function calcularPladur(input: PladurInput): PladurResult {
   const fita_metros = Math.ceil(area_total * 1.2) // approximate
   const rolos_fita = Math.ceil(fita_metros / 90) // rolos de 90m
 
-  const preco_placa = input.tipo_placa === 'standard' ? 8 : input.tipo_placa === 'hidrofuga' ? 12 : 14
+  const preco_placa_default = input.tipo_placa === 'standard' ? 8 : input.tipo_placa === 'hidrofuga' ? 12 : 14
+  const precoPlaca = precos.placa ?? preco_placa_default
+  const precoMontante = precos.montante ?? 4
+  const precoCalha = precos.calha ?? 3
+  const precoParafusos = precos.parafusos ?? 5
+  const precoMassa = precos.massa ?? 10
+  const precoFita = precos.fita ?? 4
 
   const materiais = [
     {
       nome: `Placa Pladur ${input.tipo_placa}`,
       quantidade: placas,
       unidade: 'un',
-      preco_estimado: placas * preco_placa,
+      preco_estimado: placas * precoPlaca,
     },
     {
       nome: 'Montante 48mm (3m)',
       quantidade: montantes,
       unidade: 'un',
-      preco_estimado: montantes * 4,
+      preco_estimado: montantes * precoMontante,
     },
     {
       nome: 'Calha U 48mm (3m)',
       quantidade: calhas,
       unidade: 'un',
-      preco_estimado: calhas * 3,
+      preco_estimado: calhas * precoCalha,
     },
     {
       nome: 'Parafusos Pladur',
       quantidade: caixas_parafusos,
       unidade: 'cx 500un',
-      preco_estimado: caixas_parafusos * 5,
+      preco_estimado: caixas_parafusos * precoParafusos,
     },
     {
       nome: 'Massa para juntas (5kg)',
       quantidade: sacos_massa,
       unidade: 'saco',
-      preco_estimado: sacos_massa * 10,
+      preco_estimado: sacos_massa * precoMassa,
     },
     {
       nome: 'Fita para juntas (90m)',
       quantidade: rolos_fita,
       unidade: 'rolo',
-      preco_estimado: rolos_fita * 4,
+      preco_estimado: rolos_fita * precoFita,
     },
   ]
 

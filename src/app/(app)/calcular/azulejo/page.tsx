@@ -86,24 +86,23 @@ export default function AzulejoPage() {
         </>
       )}
     >
-      <FormInput label="Nome da obra" value={nome} onChange={setNome} placeholder="Ex: Casa de banho" />
+      <FormInput label="Nome da obra" value={nome} onChange={setNome} placeholder="Ex: Casa de banho" helpText="Identificação para guardar o cálculo." />
       
       <div className="grid grid-cols-2 gap-4">
-        <FormInput label="Compr. Parede" type="number" step="0.1" required value={comprimentoParede} onChange={setComprimentoParede} placeholder="3.0" unit="m" />
-        <FormInput label="Altura Parede" type="number" step="0.1" required value={alturaParede} onChange={setAlturaParede} placeholder="2.5" unit="m" />
+        <FormInput label="Compr. Parede" type="number" step="0.1" required value={comprimentoParede} onChange={setComprimentoParede} placeholder="3.0" unit="m" helpText="Medida linear." />
+        <FormInput label="Altura Parede" type="number" step="0.1" required value={alturaParede} onChange={setAlturaParede} placeholder="2.5" unit="m" helpText="Pé direito." />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <FormInput label="Largura Peça" type="number" step="0.1" required value={larguraPeca} onChange={setLarguraPeca} placeholder="60" unit="cm" />
-        <FormInput label="Altura Peça" type="number" step="0.1" required value={alturaPeca} onChange={setAlturaPeca} placeholder="60" unit="cm" />
+        <FormInput label="Largura Peça" type="number" step="0.1" required value={larguraPeca} onChange={setLarguraPeca} placeholder="60" unit="cm" helpText="Tamanho do azulejo." />
+        <FormInput label="Altura Peça" type="number" step="0.1" required value={alturaPeca} onChange={setAlturaPeca} placeholder="60" unit="cm" helpText="Tamanho do azulejo." />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <FormInput label="Nº de Paredes" type="number" required value={quantidadeParedes} onChange={setQuantidadeParedes} placeholder="1" />
-        <FormInput label="Peças por caixa" type="number" required value={pecasPorCaixa} onChange={setPecasPorCaixa} placeholder="10" />
+      <div className="grid grid-cols-3 gap-4">
+        <FormInput label="Qtd. Paredes" type="number" step="1" required value={quantidadeParedes} onChange={setQuantidadeParedes} placeholder="1" helpText="Com as mesmas dimensões." />
+        <FormInput label="Peças/Caixa" type="number" step="1" required value={pecasPorCaixa} onChange={setPecasPorCaixa} placeholder="10" helpText="Ver na embalagem." />
+        <FormInput label="Margem" type="number" step="1" required value={margem} onChange={setMargem} placeholder="10" unit="%" helpText="Para cortes/quebras." />
       </div>
-      
-      <FormInput label="Margem de desperdício" type="number" step="1" required value={margem} onChange={setMargem} placeholder="10" unit="%" />
     </CalculatorLayout>
   )
 }
