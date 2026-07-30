@@ -21,7 +21,7 @@ export default function OrcamentosPage() {
   const [editingBudgetId, setEditingBudgetId] = useState<string | null>(null)
 
   // Form fields
-  const [clienteId, setClienteId] = useState('')
+  const [clienteSearch, setClienteSearch] = useState('')
   const [itens, setItens] = useState([{ descricao: '', quantidade: 1, unidade: 'un', preco_unitario: 0 }])
   const [maoDeObra, setMaoDeObra] = useState('')
   const [notas, setNotas] = useState('')
@@ -84,9 +84,27 @@ export default function OrcamentosPage() {
       return
     }
 
+    let finalClienteId = null
+    if (clienteSearch.trim()) {
+      const existing = clientes.find(c => c.nome.toLowerCase() === clienteSearch.trim().toLowerCase())
+      if (existing) {
+        finalClienteId = existing.id
+      } else {
+        const { data: newClient, error: clientError } = await supabase
+          .from('clients')
+          .insert({ user_id: user.id, nome: clienteSearch.trim() })
+          .select()
+          .maybeSingle()
+        
+        if (!clientError && newClient) {
+          finalClienteId = newClient.id
+        }
+      }
+    }
+
     if (editingBudgetId) {
       const { error: updateError } = await supabase.from('budgets').update({
-        client_id: clienteId || null,
+        client_id: finalClienteId,
         itens: itens.map(item => ({ ...item, total: item.quantidade * item.preco_unitario })),
         mao_de_obra: maoDeObraVal,
         materiais_total: subtotalMateriais,
@@ -103,7 +121,7 @@ export default function OrcamentosPage() {
     } else {
       const { error: insertError } = await supabase.from('budgets').insert({
         user_id: user.id,
-        client_id: clienteId || null,
+        client_id: finalClienteId,
         numero: gerarNumeroOrcamento(),
         itens: itens.map(item => ({ ...item, total: item.quantidade * item.preco_unitario })),
         mao_de_obra: maoDeObraVal,
@@ -127,13 +145,13 @@ export default function OrcamentosPage() {
     setItens([{ descricao: '', quantidade: 1, unidade: 'un', preco_unitario: 0 }])
     setMaoDeObra('')
     setNotas('')
-    setClienteId('')
+    setClienteSearch('')
     fetchData()
   }
 
   const handleEdit = (orc: Budget & { client?: Client }) => {
     setEditingBudgetId(orc.id)
-    setClienteId(orc.client_id || '')
+    setClienteSearch(orc.client?.nome || '')
     setItens(orc.itens as any || [])
     setMaoDeObra(orc.mao_de_obra.toString())
     setNotas(orc.notas || '')
@@ -239,10 +257,18 @@ export default function OrcamentosPage() {
             <div className="p-2 bg-slate-50 rounded-lg"><ReceiptText className="w-5 h-5 text-slate-400" /></div>
           </div>
 
-          <select value={clienteId} onChange={(e) => setClienteId(e.target.value)} className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none font-medium">
-            <option value="">Selecionar cliente (opcional)</option>
-            {clientes.map((c) => (<option key={c.id} value={c.id}>{c.nome}</option>))}
-          </select>
+          <div className="relative">
+            <input 
+              list="clientes_list"
+              value={clienteSearch} 
+              onChange={(e) => setClienteSearch(e.target.value)} 
+              placeholder="Nome do cliente (opcional)" 
+              className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium" 
+            />
+            <datalist id="clientes_list">
+              {clientes.map((c) => (<option key={c.id} value={c.nome} />))}
+            </datalist>
+          </div>
 
           {/* Items */}
           <div className="space-y-3 pt-2">
