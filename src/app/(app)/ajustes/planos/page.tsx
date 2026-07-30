@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Crown, Check, ArrowLeft } from 'lucide-react'
+import { Crown, Check, ArrowLeft, CreditCard } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types/database'
 import Link from 'next/link'
@@ -17,6 +17,8 @@ export default function PlanosPage() {
   const [upgradeError, setUpgradeError] = useState<string | null>(null)
   const [checkoutResult, setCheckoutResult] = useState<'sucesso' | 'cancelado' | null>(null)
   const [trialNecessario, setTrialNecessario] = useState(false)
+  const [openingPortal, setOpeningPortal] = useState(false)
+  const [portalError, setPortalError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchProfile()
@@ -79,6 +81,26 @@ export default function PlanosPage() {
     } catch (err) {
       setUpgradeError(err instanceof Error ? err.message : 'Erro ao iniciar o pagamento.')
       setUpgrading(null)
+    }
+  }
+
+  const handleManageBilling = async () => {
+    setOpeningPortal(true)
+    setPortalError(null)
+
+    try {
+      const res = await fetch('/api/portal', { method: 'POST' })
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Não foi possível abrir a gestão da subscrição.')
+      }
+
+      // eslint-disable-next-line react-hooks/immutability
+      window.location.href = data.url
+    } catch (err) {
+      setPortalError(err instanceof Error ? err.message : 'Erro ao abrir a gestão da subscrição.')
+      setOpeningPortal(false)
     }
   }
 
@@ -190,6 +212,28 @@ export default function PlanosPage() {
         ))}
       </div>
       {upgradeError && <p className="text-xs text-red-600 text-center mt-3">{upgradeError}</p>}
+
+      {profile?.plano === 'pro' && (
+        <div className="mt-6 rounded-2xl p-5 border border-border-color glass">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+              <CreditCard className="w-4 h-4" />
+            </div>
+            <h3 className="text-sm font-bold text-foreground">Faturação</h3>
+          </div>
+          <p className="text-xs text-muted-foreground mb-4">
+            Trocar o cartão, ver faturas anteriores ou cancelar a subscrição — tudo gerido em segurança pela Stripe.
+          </p>
+          <button
+            onClick={handleManageBilling}
+            disabled={openingPortal}
+            className="w-full py-3 rounded-xl bg-surface-elevated border border-border-color text-foreground font-semibold hover:bg-surface active:scale-[0.98] transition-all disabled:opacity-50"
+          >
+            {openingPortal ? 'A abrir...' : 'Gerir cartão e subscrição'}
+          </button>
+          {portalError && <p className="text-xs text-red-600 text-center mt-3">{portalError}</p>}
+        </div>
+      )}
     </div>
   )
 }
