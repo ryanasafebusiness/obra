@@ -2,27 +2,44 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { LogOut, User, Crown, Check } from 'lucide-react'
+import { LogOut, User, Briefcase, Crown, Check, Shield } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { PROFISSOES } from '@/lib/constants'
 import type { Profile } from '@/types/database'
+
+function SectionHeader({ icon: Icon, title }: { icon: React.ElementType; title: string }) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+        <Icon className="w-4 h-4" />
+      </div>
+      <h3 className="text-sm font-bold text-foreground">{title}</h3>
+    </div>
+  )
+}
 
 export default function AjustesPage() {
   const supabase = createClient()
   const router = useRouter()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
 
-  // Edit fields
+  // Dados pessoais
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
+  const [savingPessoal, setSavingPessoal] = useState(false)
+  const [savedPessoal, setSavedPessoal] = useState(false)
+  const [errorPessoal, setErrorPessoal] = useState<string | null>(null)
+
+  // Dados profissionais
   const [profissao, setProfissao] = useState('')
   const [empresa, setEmpresa] = useState('')
   const [nif, setNif] = useState('')
+  const [savingProfissional, setSavingProfissional] = useState(false)
+  const [savedProfissional, setSavedProfissional] = useState(false)
+  const [errorProfissional, setErrorProfissional] = useState<string | null>(null)
 
-  const [error, setError] = useState<string | null>(null)
+  // Plano
   const [upgrading, setUpgrading] = useState<string | null>(null)
   const [upgradeError, setUpgradeError] = useState<string | null>(null)
   const [checkoutResult, setCheckoutResult] = useState<'sucesso' | 'cancelado' | null>(null)
@@ -70,25 +87,46 @@ export default function AjustesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const handleSave = async () => {
+  const handleSavePessoal = async () => {
     if (!profile) return
-    setSaving(true)
-    setError(null)
+    setSavingPessoal(true)
+    setErrorPessoal(null)
 
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ nome, telefone, profissao, empresa, nif })
+      .update({ nome, telefone })
       .eq('id', profile.id)
 
-    setSaving(false)
+    setSavingPessoal(false)
 
     if (updateError) {
-      setError(updateError.message)
+      setErrorPessoal(updateError.message)
       return
     }
 
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    setSavedPessoal(true)
+    setTimeout(() => setSavedPessoal(false), 2000)
+  }
+
+  const handleSaveProfissional = async () => {
+    if (!profile) return
+    setSavingProfissional(true)
+    setErrorProfissional(null)
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ profissao, empresa, nif })
+      .eq('id', profile.id)
+
+    setSavingProfissional(false)
+
+    if (updateError) {
+      setErrorProfissional(updateError.message)
+      return
+    }
+
+    setSavedProfissional(true)
+    setTimeout(() => setSavedProfissional(false), 2000)
   }
 
   const handleUpgrade = async (plano: 'pro' | 'empresa') => {
@@ -180,57 +218,78 @@ export default function AjustesPage() {
         </div>
       </div>
 
-      {/* Edit Profile */}
-      <div className="glass rounded-2xl p-4 mb-4 space-y-3 animate-slide-up" style={{ animationDelay: '0.05s' }}>
-        <h3 className="text-sm font-semibold text-foreground">Dados pessoais</h3>
+      {/* Dados pessoais */}
+      <div className="glass rounded-2xl p-4 mb-4 animate-slide-up" style={{ animationDelay: '0.05s' }}>
+        <SectionHeader icon={User} title="Dados pessoais" />
 
-        <div>
-          <label className="block text-xs text-muted-foreground mb-1">Nome</label>
-          <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-surface-elevated border border-border-color text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs text-muted-foreground mb-1">Nome</label>
+            <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-surface-elevated border border-border-color text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+          </div>
+
+          <div>
+            <label className="block text-xs text-muted-foreground mb-1">Telemóvel</label>
+            <input type="tel" value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="+351 912 345 678" className="w-full px-4 py-3 rounded-xl bg-surface-elevated border border-border-color text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/50" />
+          </div>
+
+          <button
+            onClick={handleSavePessoal}
+            disabled={savingPessoal}
+            className={`w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all ${
+              savedPessoal
+                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/20 active:scale-[0.98]'
+            }`}
+          >
+            {savedPessoal ? <><Check className="w-5 h-5" /> Guardado!</> : savingPessoal ? 'A guardar...' : 'Guardar dados pessoais'}
+          </button>
+          {errorPessoal && <p className="text-xs text-red-600 text-center">{errorPessoal}</p>}
         </div>
-
-        <div>
-          <label className="block text-xs text-muted-foreground mb-1">Telemóvel</label>
-          <input type="tel" value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="+351 912 345 678" className="w-full px-4 py-3 rounded-xl bg-surface-elevated border border-border-color text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/50" />
-        </div>
-
-        <div>
-          <label className="block text-xs text-muted-foreground mb-1">Profissão</label>
-          <select value={profissao} onChange={(e) => setProfissao(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-surface-elevated border border-border-color text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 appearance-none">
-            <option value="">Selecione...</option>
-            {PROFISSOES.map((p) => (<option key={p} value={p}>{p}</option>))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-xs text-muted-foreground mb-1">Empresa</label>
-          <input type="text" value={empresa} onChange={(e) => setEmpresa(e.target.value)} placeholder="Nome da empresa" className="w-full px-4 py-3 rounded-xl bg-surface-elevated border border-border-color text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/50" />
-        </div>
-
-        <div>
-          <label className="block text-xs text-muted-foreground mb-1">NIF</label>
-          <input type="text" value={nif} onChange={(e) => setNif(e.target.value)} placeholder="123456789" className="w-full px-4 py-3 rounded-xl bg-surface-elevated border border-border-color text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/50" />
-        </div>
-
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className={`w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all ${
-            saved
-              ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-              : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/20 active:scale-[0.98]'
-          }`}
-        >
-          {saved ? <><Check className="w-5 h-5" /> Guardado!</> : saving ? 'A guardar...' : 'Guardar alterações'}
-        </button>
-        {error && <p className="text-xs text-red-600 text-center">{error}</p>}
       </div>
 
-      {/* Plans */}
-      <div className="mb-4 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-          <Crown className="w-4 h-4 text-primary" /> Planos
-        </h3>
+      {/* Dados profissionais */}
+      <div className="glass rounded-2xl p-4 mb-4 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+        <SectionHeader icon={Briefcase} title="Dados profissionais" />
+
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs text-muted-foreground mb-1">Profissão</label>
+            <select value={profissao} onChange={(e) => setProfissao(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-surface-elevated border border-border-color text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 appearance-none">
+              <option value="">Selecione...</option>
+              {PROFISSOES.map((p) => (<option key={p} value={p}>{p}</option>))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs text-muted-foreground mb-1">Empresa</label>
+            <input type="text" value={empresa} onChange={(e) => setEmpresa(e.target.value)} placeholder="Nome da empresa" className="w-full px-4 py-3 rounded-xl bg-surface-elevated border border-border-color text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/50" />
+          </div>
+
+          <div>
+            <label className="block text-xs text-muted-foreground mb-1">NIF</label>
+            <input type="text" value={nif} onChange={(e) => setNif(e.target.value)} placeholder="123456789" className="w-full px-4 py-3 rounded-xl bg-surface-elevated border border-border-color text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/50" />
+          </div>
+
+          <button
+            onClick={handleSaveProfissional}
+            disabled={savingProfissional}
+            className={`w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all ${
+              savedProfissional
+                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/20 active:scale-[0.98]'
+            }`}
+          >
+            {savedProfissional ? <><Check className="w-5 h-5" /> Guardado!</> : savingProfissional ? 'A guardar...' : 'Guardar dados profissionais'}
+          </button>
+          {errorProfissional && <p className="text-xs text-red-600 text-center">{errorProfissional}</p>}
+        </div>
+      </div>
+
+      {/* Plano e faturação */}
+      <div className="glass rounded-2xl p-4 mb-4 animate-slide-up" style={{ animationDelay: '0.15s' }}>
+        <SectionHeader icon={Crown} title="Plano e faturação" />
+
         <div className="space-y-3">
           {planos.map((plano) => (
             <div
@@ -239,8 +298,8 @@ export default function AjustesPage() {
                 profile?.plano === plano.id
                   ? 'border-primary bg-primary/5'
                   : plano.destaque
-                    ? 'border-primary/30 glass'
-                    : 'border-border-color glass'
+                    ? 'border-primary/30 bg-surface-elevated'
+                    : 'border-border-color bg-surface-elevated'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
@@ -277,15 +336,18 @@ export default function AjustesPage() {
         {upgradeError && <p className="text-xs text-red-600 text-center mt-2">{upgradeError}</p>}
       </div>
 
-      {/* Logout */}
-      <button
-        onClick={handleLogout}
-        className="w-full py-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 font-medium flex items-center justify-center gap-2 hover:bg-red-500/20 active:scale-[0.98] transition-all animate-slide-up"
-        style={{ animationDelay: '0.15s' }}
-      >
-        <LogOut className="w-5 h-5" />
-        Terminar sessão
-      </button>
+      {/* Conta */}
+      <div className="glass rounded-2xl p-4 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+        <SectionHeader icon={Shield} title="Conta" />
+
+        <button
+          onClick={handleLogout}
+          className="w-full py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 font-medium flex items-center justify-center gap-2 hover:bg-red-500/20 active:scale-[0.98] transition-all"
+        >
+          <LogOut className="w-5 h-5" />
+          Terminar sessão
+        </button>
+      </div>
     </div>
   )
 }
