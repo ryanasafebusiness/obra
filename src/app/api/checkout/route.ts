@@ -5,7 +5,7 @@ import { createCheckoutSession } from '@/lib/stripe/checkout'
 export async function POST(request: Request) {
   const { plano } = (await request.json()) as { plano?: string }
 
-  if (plano !== 'pro' && plano !== 'empresa') {
+  if (plano !== 'pro') {
     return NextResponse.json({ error: 'Plano inválido.' }, { status: 400 })
   }
 

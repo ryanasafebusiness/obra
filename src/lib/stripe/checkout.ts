@@ -39,8 +39,8 @@ export async function createCheckoutSession({
     customer_email: existingSubscription?.stripe_customer_id ? undefined : userEmail || undefined,
     client_reference_id: userId,
     currency: 'eur',
-    success_url: `${origin}/ajustes?checkout=sucesso`,
-    cancel_url: `${origin}/ajustes?checkout=cancelado`,
+    success_url: `${origin}/ajustes/planos?checkout=sucesso`,
+    cancel_url: `${origin}/ajustes/planos?checkout=cancelado`,
     metadata: { user_id: userId, plano },
     subscription_data: {
       trial_period_days: TRIAL_DAYS,

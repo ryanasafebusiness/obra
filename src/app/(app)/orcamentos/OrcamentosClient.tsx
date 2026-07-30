@@ -14,11 +14,14 @@ function gerarNumeroOrcamento() {
 
 export default function OrcamentosClient({ 
   initialBudgets, 
-  initialClients 
+  initialClients,
+  userPlan
 }: { 
   initialBudgets: (Budget & { client?: Client })[], 
-  initialClients: Client[] 
+  initialClients: Client[],
+  userPlan: string
 }) {
+  const isFreePlan = userPlan === 'gratuito'
   const supabase = createClient()
   const [orcamentos, setOrcamentos] = useState<(Budget & { client?: Client })[]>(initialBudgets)
   const [clientes, setClientes] = useState<Client[]>(initialClients)
@@ -150,6 +153,10 @@ export default function OrcamentosClient({
   }
 
   const handleEdit = (orc: Budget & { client?: Client }) => {
+    if (isFreePlan) {
+      alert('A edição de orçamentos é uma funcionalidade premium.')
+      return
+    }
     setEditingBudgetId(orc.id)
     setClienteSearch(orc.client?.nome || '')
     setItens(orc.itens as any || [])
@@ -244,13 +251,28 @@ export default function OrcamentosClient({
           <h1 className="text-3xl font-bold text-slate-800">Orçamentos</h1>
           <p className="text-slate-500 text-sm font-medium mt-1">{orcamentos.length} documentos criados</p>
         </div>
-        <button onClick={() => setShowForm(!showForm)} className="w-12 h-12 flex items-center justify-center rounded-2xl btn-primary-gradient shadow-lg shadow-orange-500/30 text-white">
-          <Plus className="w-6 h-6" />
-        </button>
+        {!isFreePlan && (
+          <button onClick={() => setShowForm(!showForm)} className="w-12 h-12 flex items-center justify-center rounded-2xl btn-primary-gradient shadow-lg shadow-orange-500/30 text-white">
+            <Plus className="w-6 h-6" />
+          </button>
+        )}
       </div>
 
+      {isFreePlan && (
+        <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5 mb-8 flex items-start gap-4">
+          <div className="w-10 h-10 bg-orange-100 text-orange-500 rounded-xl flex items-center justify-center shrink-0">
+            <ReceiptText className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-800 text-sm mb-1">Crie Orçamentos Profissionais</h3>
+            <p className="text-xs text-slate-600 mb-3 leading-relaxed">A criação e edição de orçamentos é uma funcionalidade premium. Atualize o seu plano para começar a enviar orçamentos aos seus clientes.</p>
+            <a href="/ajustes/planos" className="inline-block px-4 py-2 bg-orange-500 text-white font-bold text-xs rounded-lg shadow-sm">Ver Planos</a>
+          </div>
+        </div>
+      )}
+
       {/* Create Budget Form */}
-      {showForm && (
+      {(showForm && !isFreePlan) && (
         <form onSubmit={handleSubmit} className="floating-card p-5 mb-8 space-y-4 animate-slide-up">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-lg font-bold text-slate-800">{editingBudgetId ? 'Editar Orçamento' : 'Novo Orçamento'}</h3>

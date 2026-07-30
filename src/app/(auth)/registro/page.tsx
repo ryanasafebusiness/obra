@@ -7,7 +7,7 @@ import { ArrowLeft, ArrowRight, Check, MailCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { PROFISSOES } from '@/lib/constants'
 
-type Plano = 'pro' | 'empresa'
+type Plano = 'pro'
 
 const PLANOS: {
   id: Plano
@@ -23,12 +23,6 @@ const PLANOS: {
     destaque: true,
     features: ['Cálculos ilimitados', 'Clientes ilimitados', 'PDFs', 'Histórico completo', 'Banco de materiais'],
   },
-  {
-    id: 'empresa',
-    nome: 'Empresa',
-    preco: '29,99€/mês',
-    features: ['Tudo do Pro', 'Vários trabalhadores', 'Gestão de equipa', 'Obras ilimitadas'],
-  },
 ]
 
 const STEPS = [
@@ -41,8 +35,8 @@ const STEPS = [
     subtitle: 'Os teus orçamentos ficam guardados e prontos a enviar a qualquer hora.',
   },
   {
-    title: 'Escolhe o teu plano',
-    subtitle: '14 dias grátis em qualquer plano. Cancele quando quiser, sem custos.',
+    title: 'O teu plano',
+    subtitle: '14 dias grátis. Cancele quando quiser, sem custos.',
   },
 ] as const
 
@@ -278,7 +272,7 @@ export default function RegistroPage() {
           {step === 2 && (
             <div className="space-y-3">
               <div className="rounded-xl bg-primary/5 border border-primary/20 px-4 py-3 text-center">
-                <p className="text-sm font-bold text-primary">🎉 14 dias grátis, em qualquer plano</p>
+                <p className="text-sm font-bold text-primary">🎉 14 dias grátis</p>
                 <p className="text-xs text-muted-foreground mt-0.5">Pedimos o cartão só para ativar o trial — sem cobranças agora.</p>
               </div>
 
