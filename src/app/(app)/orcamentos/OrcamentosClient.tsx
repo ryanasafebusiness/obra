@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Send, Download, Phone, ReceiptText, Trash2 } from 'lucide-react'
+import { Plus, Send, Download, Phone, ReceiptText, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { Budget, BudgetItem, Client } from '@/types/database'
@@ -31,6 +31,7 @@ export default function OrcamentosClient({
   const [projetos, setProjetos] = useState<{ id: string; nome: string }[]>(initialProjects)
   const [showForm, setShowForm] = useState(false)
   const [editingBudgetId, setEditingBudgetId] = useState<string | null>(null)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   // Form fields
   const [clienteSearch, setClienteSearch] = useState('')
@@ -412,78 +413,89 @@ export default function OrcamentosClient({
         <div className="space-y-6">
           {orcamentos.map((orc, i) => {
             const status = BUDGET_STATUS[orc.status as keyof typeof BUDGET_STATUS] || BUDGET_STATUS.rascunho
+            const isExpanded = expandedId === orc.id
             
             return (
-              <div key={orc.id} className="floating-card overflow-hidden animate-slide-up" style={{ animationDelay: `${0.1 * (i + 1)}s` }}>
-                {/* Header (Orange) */}
-                <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-5 text-white flex justify-between items-start">
-                  <div>
-                    <p className="text-orange-100 font-medium text-xs tracking-wider uppercase mb-1">Orçamento Oficial</p>
-                    <h3 className="font-bold text-lg">{orc.numero}</h3>
-                  </div>
-                  <div className="text-right">
-                    <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold border border-white/20">
-                      {formatDate(orc.created_at)}
+              <div key={orc.id} className="floating-card overflow-hidden animate-slide-up transition-all" style={{ animationDelay: `${0.1 * (i + 1)}s` }}>
+                {/* Compact Header (Always visible) */}
+                <div 
+                  className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors"
+                  onClick={() => setExpandedId(isExpanded ? null : orc.id)}
+                >
+                  <div className="flex-1 min-w-0 pr-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-bold text-slate-800 truncate">{orc.numero}</h3>
+                      <span className={`inline-block flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${status.color}`}>
+                        {status.label}
+                      </span>
                     </div>
-                    <span className={`inline-block mt-1.5 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${status.color}`}>
-                      {status.label}
-                    </span>
+                    <p className="text-sm text-slate-500 truncate">{orc.client?.nome || 'Sem cliente associado'}</p>
+                    {orc.project && (
+                      <p className="text-xs text-primary font-medium truncate">Obra: {orc.project.nome}</p>
+                    )}
+                  </div>
+                  <div className="text-right flex flex-col items-end flex-shrink-0">
+                    <p className="text-lg font-black text-slate-800">{formatCurrency(orc.total)}</p>
+                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mt-2 transition-transform duration-300">
+                      {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </div>
                   </div>
                 </div>
 
-                {/* Content */}
-                <div className="p-5">
-                  <div className="flex items-start gap-3 mb-5">
-                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 text-slate-400">
-                      <Phone className="w-5 h-5" />
+                {/* Expanded Content */}
+                {isExpanded && (
+                  <div className="border-t border-slate-100">
+                    <div className="p-5">
+                      <div className="flex items-start gap-3 mb-5">
+                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 text-slate-400">
+                          <Phone className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">Detalhes do Cliente</p>
+                          <p className="font-bold text-slate-800">{orc.client?.nome || 'Não associado'}</p>
+                          {orc.client?.telefone && (
+                            <p className="text-sm text-slate-500">{orc.client.telefone}</p>
+                          )}
+                          {orc.client?.email && (
+                            <p className="text-sm text-slate-500">{orc.client.email}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Receipt items snippet */}
+                      <div className="bg-slate-50 rounded-xl p-4 mb-5 border border-slate-100 relative">
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-100 text-[10px] font-bold text-slate-500 px-3 py-1 rounded-full uppercase tracking-wider">Resumo ({formatDate(orc.created_at)})</div>
+                        <ul className="space-y-1.5 mt-2">
+                          {(orc.itens as BudgetItem[]).slice(0, 3).map((item, idx) => (
+                            <li key={idx} className="text-sm flex items-start gap-2 text-slate-600">
+                              <span className="text-primary mt-0.5">•</span>
+                              <span className="truncate">{item.descricao}</span>
+                            </li>
+                          ))}
+                          {(orc.itens as BudgetItem[]).length > 3 && (
+                            <li className="text-sm text-slate-400 italic ml-4">+ {(orc.itens as BudgetItem[]).length - 3} itens</li>
+                          )}
+                        </ul>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">Cliente</p>
-                      <p className="font-bold text-slate-800">{orc.client?.nome || 'Cliente não associado'}</p>
-                      {orc.project && (
-                        <p className="text-xs text-primary font-medium mt-0.5">Obra: {orc.project.nome}</p>
-                      )}
+
+                    {/* Actions */}
+                    <div className="p-4 pt-0 grid grid-cols-6 gap-3">
+                      <button onClick={() => enviarWhatsApp(orc)} className="col-span-6 py-3.5 rounded-xl bg-[#25D366] text-white font-bold flex items-center justify-center gap-2 hover:bg-[#20bd5a] transition-colors shadow-lg shadow-[#25D366]/20">
+                        <Send className="w-5 h-5" /> Enviar por WhatsApp
+                      </button>
+                      <button className="col-span-3 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-colors">
+                        <Download className="w-4 h-4" /> PDF
+                      </button>
+                      <button onClick={() => handleEdit(orc)} className="col-span-3 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-colors">
+                        Editar
+                      </button>
+                      <button onClick={() => handleDelete(orc.id)} className="col-span-6 py-3 rounded-xl bg-red-50 text-red-600 font-bold flex items-center justify-center gap-2 hover:bg-red-100 transition-colors">
+                        <Trash2 className="w-4 h-4" /> Apagar Orçamento
+                      </button>
                     </div>
                   </div>
-
-                  {/* Receipt items snippet */}
-                  <div className="bg-slate-50 rounded-xl p-4 mb-5 border border-slate-100 relative">
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-100 text-[10px] font-bold text-slate-500 px-3 py-1 rounded-full uppercase tracking-wider">Resumo</div>
-                    <ul className="space-y-1.5 mt-2">
-                      {(orc.itens as BudgetItem[]).slice(0, 3).map((item, idx) => (
-                        <li key={idx} className="text-sm flex items-start gap-2 text-slate-600">
-                          <span className="text-primary mt-0.5">•</span>
-                          <span className="truncate">{item.descricao}</span>
-                        </li>
-                      ))}
-                      {(orc.itens as BudgetItem[]).length > 3 && (
-                        <li className="text-sm text-slate-400 italic ml-4">+ {(orc.itens as BudgetItem[]).length - 3} itens</li>
-                      )}
-                    </ul>
-                  </div>
-
-                  {/* Total line (dashed border) */}
-                  <div className="border-t-2 border-dashed border-slate-200 pt-4 flex items-center justify-between">
-                    <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">Total</span>
-                    <span className="text-2xl font-black text-slate-800">{formatCurrency(orc.total)}</span>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="p-4 pt-0 grid grid-cols-6 gap-3">
-                  <button onClick={() => enviarWhatsApp(orc)} className="col-span-6 py-3.5 rounded-xl bg-[#25D366] text-white font-bold flex items-center justify-center gap-2 hover:bg-[#20bd5a] transition-colors shadow-lg shadow-[#25D366]/20">
-                    <Send className="w-4 h-4" /> Enviar WhatsApp
-                  </button>
-                  <button onClick={() => handleEdit(orc)} className="col-span-2 py-3.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold flex items-center justify-center hover:bg-slate-50 transition-colors">
-                    Editar
-                  </button>
-                  <button onClick={() => gerarPDF(orc)} className="col-span-3 py-3.5 rounded-xl bg-slate-100 text-slate-700 font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-colors">
-                    <Download className="w-4 h-4" /> PDF
-                  </button>
-                  <button onClick={() => handleDelete(orc.id)} className="col-span-1 py-3.5 rounded-xl bg-red-50 text-red-600 font-bold flex items-center justify-center hover:bg-red-100 transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+                )}
               </div>
             )
           })}

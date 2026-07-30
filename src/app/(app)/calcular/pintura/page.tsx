@@ -87,7 +87,7 @@ export default function PinturaPage() {
       renderResultHeader={() => (
         <>
           <ResultRow label="Área total:" value={`${formatNumber(resultado!.area_total, 1)}m²`} />
-          <ResultRow label="Necessário:" value={`🪣 ${resultado!.litros_necessarios} Litros`} highlight />
+          <ResultRow label="Tinta necessária:" value={`🪣 ${resultado!.materiais.find(m => m.nome === 'Tinta')?.quantidade || 0} ${resultado!.materiais.find(m => m.nome === 'Tinta')?.unidade || ''} (${resultado!.litros_necessarios}L)`} highlight />
         </>
       )}
     >

@@ -72,7 +72,7 @@ export default function BetaoPage() {
       renderResultHeader={() => (
         <>
           <ResultRow label="Volume total:" value={`${formatNumber(resultado!.volume_m3, 2)}m³`} />
-          <ResultRow label="Cimento necessário:" value={`🏗️ ${resultado!.materiais.find(m => m.nome === 'Cimento')?.quantidade || 0} sacos`} highlight />
+          <ResultRow label="Cimento necessário:" value={`🏗️ ${resultado!.materiais.find(m => m.nome.includes('Cimento'))?.quantidade || 0} sacos`} highlight />
         </>
       )}
     >

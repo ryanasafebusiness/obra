@@ -26,6 +26,10 @@ export interface PinturaResult {
   custo_total_materiais: number
 }
 
+// Tinta não se compra ao litro avulso — vende-se em baldes/galões. Assume-se
+// o formato mais comum no retalho português para tinta de interior (15L).
+const BALDE_TINTA_L = 15
+
 export function calcularPintura(input: PinturaInput): PinturaResult {
   const area_bruta = input.comprimento * input.altura * input.quantidade_paredes
   const area_descontada = input.area_portas + input.area_janelas
@@ -34,13 +38,14 @@ export function calcularPintura(input: PinturaInput): PinturaResult {
 
   // Round up to nearest liter
   const litros = Math.ceil(litros_necessarios)
+  const baldes_tinta = Math.ceil(litros / BALDE_TINTA_L)
 
   const materiais = [
     {
       nome: 'Tinta',
-      quantidade: litros,
-      unidade: 'L',
-      preco_estimado: litros * 7, // ~7€/L average
+      quantidade: baldes_tinta,
+      unidade: `balde ${BALDE_TINTA_L}L`,
+      preco_estimado: baldes_tinta * BALDE_TINTA_L * 7, // ~7€/L average
     },
     {
       nome: 'Rolo de pintura',
