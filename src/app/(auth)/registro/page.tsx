@@ -19,7 +19,7 @@ const PLANOS: {
   {
     id: 'pro',
     nome: 'Pro',
-    preco: '9,99€/mês',
+    preco: '4,99€/mês',
     destaque: true,
     features: ['Cálculos ilimitados', 'Clientes ilimitados', 'PDFs', 'Histórico completo', 'Banco de materiais'],
   },

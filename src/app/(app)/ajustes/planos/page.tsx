@@ -116,7 +116,7 @@ export default function PlanosPage() {
     {
       id: 'pro',
       nome: 'Pro',
-      preco: '9,99€/mês',
+      preco: '4,99€/mês',
       features: ['Cálculos ilimitados', 'Clientes ilimitados', 'PDFs', 'Histórico completo', 'Banco de materiais'],
       destaque: true,
     },
