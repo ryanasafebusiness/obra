@@ -1,16 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { calcularPladur, type PladurResult } from '@/lib/calculations/pladur'
 import { saveCalculation } from '@/lib/calculations/save'
 import { createClient } from '@/lib/supabase/client'
 import { formatNumber } from '@/lib/utils'
+import { fetchPrecosCategoria, precoMedioPorTermo, type MaterialPreco } from '@/lib/materials'
 
 type TipoPlaca = 'standard' | 'hidrofuga' | 'fogo'
 import { CalculatorLayout, FormInput, ResultRow } from '@/components/CalculatorLayout'
 
+const TIPO_PLACA_TERMO: Record<TipoPlaca, { termo: string; fallback: number }> = {
+  standard: { termo: 'Standard', fallback: 8 },
+  hidrofuga: { termo: 'Hidrófuga', fallback: 12 },
+  fogo: { termo: 'Fogo', fallback: 14 },
+}
+
 export default function PladurPage() {
   const supabase = createClient()
+  const [precos, setPrecos] = useState<MaterialPreco[]>([])
   const [nome, setNome] = useState('')
   const [comprimento, setComprimento] = useState('')
   const [altura, setAltura] = useState('')
@@ -21,15 +29,32 @@ export default function PladurPage() {
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchPrecosCategoria(supabase, 'pladur').then(setPrecos)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleCalcular = (e: React.FormEvent) => {
     e.preventDefault()
-    const result = calcularPladur({
-      nome: nome || 'Divisória Pladur',
-      comprimento: parseFloat(comprimento),
-      altura: parseFloat(altura),
-      tipo_placa: tipoPlaca,
-      dupla_face: duplaFace
-    })
+    const placaInfo = TIPO_PLACA_TERMO[tipoPlaca]
+    const result = calcularPladur(
+      {
+        nome: nome || 'Divisória Pladur',
+        comprimento: parseFloat(comprimento),
+        altura: parseFloat(altura),
+        tipo_placa: tipoPlaca,
+        dupla_face: duplaFace
+      },
+      {
+        placa: precoMedioPorTermo(precos, placaInfo.termo, placaInfo.fallback),
+        montante: precoMedioPorTermo(precos, 'Montante', 4),
+        calha: precoMedioPorTermo(precos, 'Calha', 3),
+        parafusos: precoMedioPorTermo(precos, 'Parafusos', 5),
+        massa: precoMedioPorTermo(precos, 'Massa', 10),
+        fita: precoMedioPorTermo(precos, 'Fita', 4),
+      }
+    )
     setResultado(result)
     setSaved(false)
     setError(null)

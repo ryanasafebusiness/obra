@@ -1,21 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { calcularTijolos, type TijolosResult } from '@/lib/calculations/tijolos'
 import { saveCalculation } from '@/lib/calculations/save'
 import { createClient } from '@/lib/supabase/client'
 import { formatNumber } from '@/lib/utils'
+import { fetchPrecosCategoria, precoMedioPorTermo, type MaterialPreco } from '@/lib/materials'
 import { CalculatorLayout, FormInput, ResultRow } from '@/components/CalculatorLayout'
 
 const BLOCK_TYPES = [
-  { id: 'tijolo_11', nome: 'Tijolo 11', comprimento: 30, altura: 20, espessura: 11, per_m2: 17 },
-  { id: 'tijolo_15', nome: 'Tijolo 15', comprimento: 30, altura: 20, espessura: 15, per_m2: 17 },
-  { id: 'bloco_20', nome: 'Bloco Térmico 20', comprimento: 50, altura: 20, espessura: 20, per_m2: 10 },
-  { id: 'bloco_25', nome: 'Bloco Térmico 25', comprimento: 50, altura: 20, espessura: 25, per_m2: 10 },
+  { id: 'tijolo_11', nome: 'Tijolo 11', comprimento: 30, altura: 20, espessura: 11, per_m2: 17, preco_fallback: 0.55 },
+  { id: 'tijolo_15', nome: 'Tijolo 15', comprimento: 30, altura: 20, espessura: 15, per_m2: 17, preco_fallback: 0.65 },
+  { id: 'bloco_20', nome: 'Bloco Térmico 20', comprimento: 50, altura: 20, espessura: 20, per_m2: 10, preco_fallback: 0.85 },
+  { id: 'bloco_25', nome: 'Bloco Térmico 25', comprimento: 50, altura: 20, espessura: 25, per_m2: 10, preco_fallback: 0.95 },
 ]
 
 export default function TijolosPage() {
   const supabase = createClient()
+  const [precos, setPrecos] = useState<MaterialPreco[]>([])
   const [nome, setNome] = useState('')
   const [comprimento, setComprimento] = useState('')
   const [altura, setAltura] = useState('')
@@ -26,18 +28,31 @@ export default function TijolosPage() {
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchPrecosCategoria(supabase, 'tijolos').then(setPrecos)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleCalcular = (e: React.FormEvent) => {
     e.preventDefault()
     const bloco = BLOCK_TYPES.find(b => b.id === tipoBloco) || BLOCK_TYPES[0]
 
-    const result = calcularTijolos({
-      nome: nome || 'Parede de Tijolo',
-      comprimento_parede: parseFloat(comprimento),
-      altura_parede: parseFloat(altura),
-      tipo_bloco: tipoBloco,
-      blocos_por_m2: bloco.per_m2,
-      margem_desperdicio: parseFloat(margem)
-    })
+    const result = calcularTijolos(
+      {
+        nome: nome || 'Parede de Tijolo',
+        comprimento_parede: parseFloat(comprimento),
+        altura_parede: parseFloat(altura),
+        tipo_bloco: bloco.nome,
+        blocos_por_m2: bloco.per_m2,
+        margem_desperdicio: parseFloat(margem)
+      },
+      {
+        bloco_un: precoMedioPorTermo(precos, bloco.nome, bloco.preco_fallback),
+        cimento_saco: precoMedioPorTermo(precos, 'Cimento', 6),
+        areia_m3: precoMedioPorTermo(precos, 'Areia', 30),
+      }
+    )
     setResultado(result)
     setSaved(false)
     setError(null)

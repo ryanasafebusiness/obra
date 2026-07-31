@@ -1,14 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { calcularAzulejo, type AzulejoResult } from '@/lib/calculations/azulejo'
 import { saveCalculation } from '@/lib/calculations/save'
 import { createClient } from '@/lib/supabase/client'
 import { formatNumber } from '@/lib/utils'
+import { fetchPrecosCategoria, precoMedioPorTermo, type MaterialPreco } from '@/lib/materials'
 import { CalculatorLayout, FormInput, ResultRow } from '@/components/CalculatorLayout'
 
 export default function AzulejoPage() {
   const supabase = createClient()
+  const [precos, setPrecos] = useState<MaterialPreco[]>([])
   const [nome, setNome] = useState('')
   const [comprimentoParede, setComprimentoParede] = useState('')
   const [alturaParede, setAlturaParede] = useState('')
@@ -22,18 +24,33 @@ export default function AzulejoPage() {
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchPrecosCategoria(supabase, 'azulejo').then(setPrecos)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleCalcular = (e: React.FormEvent) => {
     e.preventDefault()
-    const result = calcularAzulejo({
-      nome: nome || 'Assentamento Azulejo',
-      comprimento_parede: parseFloat(comprimentoParede),
-      altura_parede: parseFloat(alturaParede),
-      quantidade_paredes: parseInt(quantidadeParedes),
-      largura_peca: parseFloat(larguraPeca),
-      altura_peca: parseFloat(alturaPeca),
-      pecas_por_caixa: parseInt(pecasPorCaixa),
-      margem_desperdicio: parseFloat(margem)
-    })
+    const result = calcularAzulejo(
+      {
+        nome: nome || 'Assentamento Azulejo',
+        comprimento_parede: parseFloat(comprimentoParede),
+        altura_parede: parseFloat(alturaParede),
+        quantidade_paredes: parseInt(quantidadeParedes),
+        largura_peca: parseFloat(larguraPeca),
+        altura_peca: parseFloat(alturaPeca),
+        pecas_por_caixa: parseInt(pecasPorCaixa),
+        margem_desperdicio: parseFloat(margem)
+      },
+      {
+        azulejo_m2: precoMedioPorTermo(precos, 'Azulejo', 15),
+        cola: precoMedioPorTermo(precos, 'Cola', 12),
+        rejunte: precoMedioPorTermo(precos, 'Rejunte', 8),
+        espacadores: precoMedioPorTermo(precos, 'Espaçadores', 2),
+        cruzetas: precoMedioPorTermo(precos, 'Cruzetas', 3),
+      }
+    )
     setResultado(result)
     setSaved(false)
     setError(null)
