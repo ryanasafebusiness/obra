@@ -6,6 +6,7 @@ import { BUDGET_STATUS, CALCULATOR_MODULES } from '@/lib/constants'
 import { ArrowLeft, MapPin, Phone, Wrench, Calendar, ReceiptText, Calculator } from 'lucide-react'
 import { ObraStatusSelect } from '@/components/ObraStatusSelect'
 import { DeleteObraButton } from '@/components/DeleteObraButton'
+import { ObraPdfButton } from '@/components/ObraPdfButton'
 import type { Budget, Calculation, Client, Project } from '@/types/database'
 
 type ProjectDetail = Project & {
@@ -166,6 +167,7 @@ export default async function ObraDetailPage({ params }: { params: Promise<{ id:
         </div>
       )}
 
+      <ObraPdfButton obra={obra} />
       <DeleteObraButton id={obra.id} nome={obra.nome} />
     </div>
   )
